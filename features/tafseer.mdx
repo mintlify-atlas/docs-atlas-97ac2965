@@ -1,0 +1,293 @@
+---
+title: Tafseer (Commentary)
+description: Access multiple Quran commentaries through dynamic popups with tab-based navigation
+---
+
+## Overview
+
+Open Mushaf Native provides instant access to authentic Tafseer (Quranic commentary) from renowned Islamic scholars. Simply tap any verse to view its explanation in a bottom sheet popup with multiple commentary sources.
+
+## Available Commentaries
+
+The app includes 11 comprehensive Tafseer sources:
+
+<CardGroup cols={2}>
+  <Card title="تفسير ابن كثير" icon="book">
+    Ibn Katheer - Classical Tafseer focusing on authentic narrations
+  </Card>
+  
+  <Card title="تفسير الطبري" icon="scroll">
+    Al-Tabari - Comprehensive early Tafseer with historical context
+  </Card>
+  
+  <Card title="تفسير القرطبي" icon="mosque">
+    Al-Qurtubi - Focus on legal rulings and jurisprudence
+  </Card>
+  
+  <Card title="تفسير السعدي" icon="book-open">
+    As-Sa'di - Modern, concise, and clear explanations
+  </Card>
+  
+  <Card title="التفسير الميسر" icon="circle-info">
+    Al-Muyassar - Simplified Tafseer for easy understanding
+  </Card>
+  
+  <Card title="تفسير البغوي" icon="book-bookmark">
+    Al-Baghawi - Moderate approach between narration and reasoning
+  </Card>
+  
+  <Card title="معاني القرآن" icon="language">
+    Meanings of the Quran - Linguistic and grammatical explanations
+  </Card>
+  
+  <Card title="إعراب القرآن" icon="spell-check">
+    Quranic Grammar - Detailed grammatical analysis
+  </Card>
+  
+  <Card title="أسباب النزول" icon="circle-question">
+    Asbab an-Nuzul (Al-Wahidi) - Reasons and context of revelation
+  </Card>
+  
+  <Card title="التحرير والتنوير" icon="lightbulb">
+    At-Tahrir wa At-Tanwir - Modern comprehensive commentary
+  </Card>
+  
+  <Card title="الوسيط" icon="book-open-reader">
+    Al-Waseet - Moderate middle-ground approach
+  </Card>
+</CardGroup>
+
+## How to Use Tafseer
+
+<Steps>
+  <Step title="Tap a Verse">
+    Touch any verse on the Mushaf page to open the Tafseer popup
+  </Step>
+  
+  <Step title="View Commentary">
+    The bottom sheet displays the commentary for that specific verse
+  </Step>
+  
+  <Step title="Switch Sources">
+    Tap different tabs to switch between various Tafseer sources
+  </Step>
+  
+  <Step title="Resize Sheet">
+    Drag the handle to resize the popup (40%, 70%, or 90% screen height)
+  </Step>
+  
+  <Step title="Close">
+    Swipe down or tap the backdrop to close the Tafseer
+  </Step>
+</Steps>
+
+## Tafseer Popup Component
+
+### Bottom Sheet Implementation
+
+```tsx components/TafseerPopup.tsx
+<BottomSheet
+  ref={bottomSheetRef}
+  index={1}
+  snapPoints={['40%', '70%', '90%']}
+  onChange={handleSheetChange}
+  backdropComponent={renderBackdrop}
+  handleComponent={renderHandle}
+  enablePanDownToClose
+  backgroundStyle={{ backgroundColor }}
+>
+  <BottomSheetScrollView>
+    <Tafseer aya={aya} surah={surah} opacity={opacity} />
+  </BottomSheetScrollView>
+</BottomSheet>
+```
+
+<Note>
+The popup opens at 70% height by default and can be resized to 40% or 90% by dragging the handle.
+</Note>
+
+## Tafseer Tab System
+
+### Tab Labels
+
+```typescript components/Tafseer.tsx
+const tabLabels: Partial<Record<TafseerTabs, string>> = {
+  katheer: 'إبن كثير',
+  maany: 'معاني القرآن',
+  earab: 'إعراب القرآن',
+  baghawy: 'البغوي',
+  muyassar: 'الميسر',
+  qortoby: 'القرطبي',
+  tabary: 'الطبري',
+  saady: 'السعدي',
+  wahidy: 'أسباب النزول',
+  tanweer: 'التحرير و التنوير',
+  waseet: 'الوسيط',
+};
+```
+
+### Dynamic Tab Loading
+
+The app intelligently loads Tafseer content:
+
+```typescript components/Tafseer.tsx
+switch (selectedTabValue) {
+  case 'baghawy':
+    tafseerJSON = await import('@/assets/tafaseer/baghawy.json');
+    break;
+  case 'katheer':
+    tafseerJSON = await import('@/assets/tafaseer/katheer.json');
+    break;
+  case 'saady':
+    tafseerJSON = await import('@/assets/tafaseer/saady.json');
+    break;
+  // ... more cases
+}
+```
+
+<Tip>
+Tafseer data is loaded on-demand only when you select a tab, reducing initial app load time.
+</Tip>
+
+## Content Availability
+
+### Smart Tab Indicators
+
+Not all Tafseers contain commentary for every verse. The app shows which sources have content:
+
+```typescript
+const hasContent = !hasNoTafseerContent({
+  tafseerData: data,
+  surah,
+  aya,
+});
+
+setTabsWithContent((prev) => ({
+  ...prev,
+  [tab]: hasContent,
+}));
+```
+
+Tabs without content appear:
+- Dimmed (opacity: 0.5)
+- With strikethrough text decoration
+
+<Accordion title="Why are some tabs disabled?">
+  Some Tafseer sources don't provide commentary for certain verses, particularly short verses or specific types of content. This is normal and reflects the original scholarly works.
+</Accordion>
+
+## Tafseer Content Hook
+
+### Formatting HTML
+
+```typescript hooks/useTafseerContent.ts
+export function useTafseerContent({
+  tafseerData,
+  surah,
+  aya,
+}: UseFormattedTafseerParams): string {
+  const ayaTafseer = tafseerData?.find(
+    (t) => t.sura === surah && t.aya === aya,
+  );
+
+  let tafseerText = '';
+  if (!ayaTafseer?.text || ayaTafseer?.text === '<p></p>') {
+    tafseerText = '<p>لا يوجد تفسير.</p>';
+  } else {
+    tafseerText = `<div>${ayaTafseer.text}</div>`;
+  }
+  return tafseerText;
+}
+```
+
+### Checking Content Availability
+
+```typescript
+export function hasNoTafseerContent({
+  tafseerData,
+  surah,
+  aya,
+}: UseFormattedTafseerParams): boolean {
+  const ayaTafseer = tafseerData?.find(
+    (t) => t.sura === surah && t.aya === aya,
+  );
+
+  if (
+    !ayaTafseer?.text ||
+    ayaTafseer.text.trim() === '' ||
+    ayaTafseer.text === '<p></p>'
+  ) {
+    return true; // No tafseer content
+  }
+  return false; // Tafseer content exists
+}
+```
+
+## Persistent Selection
+
+Your last selected Tafseer tab is remembered:
+
+```typescript jotai/atoms.ts
+export const tafseerTab = createAtomWithStorage<TafseerTabs>(
+  'TafseerTab',
+  'katheer', // Default to Ibn Katheer
+);
+```
+
+<Note>
+The app remembers your preferred Tafseer source across sessions, opening the same tab next time.
+</Note>
+
+## Styling and Display
+
+### HTML Rendering
+
+Tafseer content uses HTMLView for proper Arabic text rendering:
+
+```tsx
+<HTMLView
+  value={formattedTafseerHtml}
+  stylesheet={{
+    div: {
+      color: textColor,
+      fontFamily: 'Tajawal_400Regular',
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    p: {
+      color: textColor,
+      fontFamily: 'Tajawal_400Regular',
+      fontSize: 16,
+      lineHeight: 24,
+    },
+  }}
+/>
+```
+
+### Visual Features
+
+- Right-to-left text direction for Arabic
+- Custom Arabic font (Tajawal)
+- Optimized line height for readability
+- Theme-aware text colors
+- Smooth scrolling for long commentaries
+
+## Performance Optimization
+
+<CardGroup cols={2}>
+  <Card title="Lazy Loading" icon="hourglass">
+    Tafseer files are only loaded when their tab is selected
+  </Card>
+  
+  <Card title="Content Checking" icon="check-circle">
+    Pre-checks all sources to show which have content before you click
+  </Card>
+  
+  <Card title="Opacity Animation" icon="wand-magic-sparkles">
+    Smooth opacity transition during sheet resizing for better UX
+  </Card>
+  
+  <Card title="Mounted State" icon="shield">
+    Prevents memory leaks when switching verses quickly
+  </Card>
+</CardGroup>

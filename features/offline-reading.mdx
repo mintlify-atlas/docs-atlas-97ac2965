@@ -1,0 +1,143 @@
+---
+title: Offline Reading
+description: Learn how Open Mushaf Native handles offline page caching and storage for seamless Quran reading without internet
+---
+
+## Overview
+
+Open Mushaf Native provides a robust offline reading experience by preloading and caching Mushaf pages locally. This ensures smooth navigation and instant page loading, even without an internet connection.
+
+## How It Works
+
+### Image Preloading System
+
+The app uses a smart preloading strategy implemented in `useImagePreloader.ts` to cache pages ahead of time:
+
+<Steps>
+  <Step title="Current Page Detection">
+    The hook monitors the current page you're viewing
+  </Step>
+  
+  <Step title="Adjacent Pages Calculation">
+    Automatically identifies which pages to preload:
+    - Current page
+    - Previous page (currentPage - 1)
+    - Next two pages (currentPage + 1, currentPage + 2)
+  </Step>
+  
+  <Step title="Asset Download">
+    Downloads page images using Expo Asset API and stores them locally
+  </Step>
+  
+  <Step title="Cache Management">
+    Maintains a limited cache size by removing pages far from the current view
+  </Step>
+</Steps>
+
+### Implementation Details
+
+```typescript hooks/useImagePreloader.ts
+// Calculate pages to preload (current, previous one, next two)
+const pagesToPreload = [
+  currentPage,
+  Math.max(currentPage - 1, 1),
+  Math.min(currentPage + 1, defaultNumberOfPages),
+  Math.min(currentPage + 2, defaultNumberOfPages),
+];
+
+// Start downloading all assets in parallel
+await Promise.all(
+  assetsToLoad.map(async (asset) => {
+    if (!asset.downloaded) {
+      await asset.downloadAsync();
+    }
+  }),
+);
+```
+
+<Note>
+The preloader works for both Hafs and Warsh Riwayas, automatically selecting the correct image set based on your chosen Riwaya.
+</Note>
+
+## Storage Strategy
+
+### Asset Management
+
+Pages are stored using Expo's Asset system, which:
+
+- Caches images in the device's native storage
+- Persists across app sessions
+- Manages storage efficiently
+- Downloads assets only once
+
+### Cache Optimization
+
+To prevent excessive storage usage:
+
+```typescript
+// Limit the cache size by removing pages that are far from current view
+// Keep only the current page, previous 1 page, and next 2 pages
+const pagesToKeep = new Set<number>([
+  currentPage,
+  Math.max(currentPage - 1, 1),
+  Math.min(currentPage + 1, defaultNumberOfPages),
+  Math.min(currentPage + 2, defaultNumberOfPages),
+]);
+
+preloadedPagesRef.current = new Set(
+  [...preloadedPagesRef.current].filter((page) =>
+    pagesToKeep.has(page),
+  ),
+);
+```
+
+<Tip>
+The app maintains a rolling cache of 4 pages maximum, ensuring fast navigation while keeping storage usage minimal.
+</Tip>
+
+## Benefits
+
+<CardGroup cols={2}>
+  <Card title="Instant Navigation" icon="bolt">
+    Pages load instantly as you swipe because they're already cached locally
+  </Card>
+  
+  <Card title="No Internet Required" icon="wifi-slash">
+    Read the entire Quran without any internet connection
+  </Card>
+  
+  <Card title="Smart Caching" icon="brain">
+    Only keeps nearby pages cached to save storage space
+  </Card>
+  
+  <Card title="Cross-Riwaya Support" icon="book-quran">
+    Works seamlessly with both Hafs and Warsh Mushafs
+  </Card>
+</CardGroup>
+
+## Technical Architecture
+
+The offline system is built on several key components:
+
+<Accordion title="useImagePreloader Hook">
+  Monitors current page and preloads adjacent pages in the background. Maintains a Set of preloaded page numbers to avoid redundant downloads.
+</Accordion>
+
+<Accordion title="useImagesArray Hook">
+  Loads the actual image asset for the current page, selecting from the appropriate Riwaya image map (Hafs or Warsh).
+</Accordion>
+
+<Accordion title="Asset Loading">
+  Uses `Asset.fromModule()` to load page images and `downloadAsync()` to cache them locally on the device.
+</Accordion>
+
+## Performance Considerations
+
+- **Parallel Downloads**: Multiple pages are downloaded simultaneously for faster caching
+- **Mounted State Checking**: Prevents memory leaks by checking component mount status before setting state
+- **Conditional Loading**: Only downloads assets that haven't been cached yet
+- **Dynamic Image Maps**: Switches between Hafs (604 pages) and Warsh image collections based on selected Riwaya
+
+<Note>
+The preloader automatically pauses if the Riwaya is not yet selected, preventing unnecessary downloads.
+</Note>

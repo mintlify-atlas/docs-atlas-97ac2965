@@ -1,0 +1,795 @@
+---
+title: State Atoms
+description: Jotai atoms for global state management in Open Mushaf Native
+---
+
+## Overview
+
+Open Mushaf Native uses [Jotai](https://jotai.org/) for atomic state management. All atoms are created with `createAtomWithStorage` to persist state across app sessions.
+
+## Core State Atoms
+
+### bottomMenuState
+
+Controls the visibility of the bottom navigation menu.
+
+```typescript
+export const bottomMenuState = createAtomWithStorage<boolean>(
+  'BottomMenuState',
+  true,
+);
+```
+
+<ParamField path="type" type="boolean">
+  State value type
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'BottomMenuState'`
+</ParamField>
+
+<ParamField path="default" type="boolean">
+  Default value: `true`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { bottomMenuState } from '@/jotai/atoms';
+
+function BottomMenu() {
+  const [isVisible, setIsVisible] = useAtom(bottomMenuState);
+  
+  return (
+    <View style={{ display: isVisible ? 'flex' : 'none' }}>
+      <MenuContent />
+    </View>
+  );
+}
+```
+
+---
+
+### topMenuState
+
+Controls the visibility of the top menu with automatic hiding after 5 seconds.
+
+```typescript
+export const topMenuState = createAtomWithStorage<boolean>(
+  'TopMenuState',
+  false,
+);
+```
+
+<ParamField path="type" type="boolean">
+  State value type
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'TopMenuState'`
+</ParamField>
+
+<ParamField path="default" type="boolean">
+  Default value: `false`
+</ParamField>
+
+**Auto-hide Effect:**
+
+The top menu automatically hides after the duration specified in `EXPO_PUBLIC_TOP_MENU_HIDE_DURATION_MS` (default: 5000ms).
+
+```typescript
+observe((get, set) => {
+  const duration = parseInt(
+    process.env.EXPO_PUBLIC_TOP_MENU_HIDE_DURATION_MS || '5000',
+    10,
+  );
+  if (get(topMenuState)) {
+    const timerId = setTimeout(() => {
+      set(topMenuState, false);
+    }, duration);
+    return () => clearTimeout(timerId);
+  }
+});
+```
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { topMenuState } from '@/jotai/atoms';
+
+function TopMenu() {
+  const [isVisible, setIsVisible] = useAtom(topMenuState);
+  
+  return (
+    <Animated.View style={{ opacity: isVisible ? 1 : 0 }}>
+      <MenuBar />
+    </Animated.View>
+  );
+}
+```
+
+---
+
+## Page & Navigation Atoms
+
+### currentSavedPage
+
+Stores the user's current page in the Quran.
+
+```typescript
+export const currentSavedPage = createAtomWithStorage<number>(
+  'CurrentSavedPage',
+  1,
+);
+```
+
+<ParamField path="type" type="number">
+  State value type
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'CurrentSavedPage'`
+</ParamField>
+
+<ParamField path="default" type="number">
+  Default value: `1`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { currentSavedPage } from '@/jotai/atoms';
+
+function PageIndicator() {
+  const [page, setPage] = useAtom(currentSavedPage);
+  
+  return (
+    <Text>Page {page} of 604</Text>
+  );
+}
+```
+
+---
+
+### yesterdayPage
+
+Stores yesterday's page for progress tracking with automatic daily reset.
+
+```typescript
+type PageWithDate = {
+  value: number;
+  date: string;
+};
+
+export const yesterdayPage = createAtomWithStorage<PageWithDate>(
+  'YesterdayPage',
+  {
+    value: 1,
+    date: new Date().toDateString(),
+  },
+);
+```
+
+<ParamField path="type" type="PageWithDate">
+  State value type with:
+  - `value`: Page number
+  - `date`: Date string for reset tracking
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'YesterdayPage'`
+</ParamField>
+
+<ParamField path="default" type="PageWithDate">
+  Default: `{ value: 1, date: new Date().toDateString() }`
+</ParamField>
+
+**Auto-reset Effect:**
+
+Automatically resets to the current saved page when the date changes:
+
+```typescript
+observe((get, set) => {
+  (async () => {
+    const today = new Date().toDateString();
+    const saved = await get(yesterdayPage);
+    const lastPage = await get(currentSavedPage);
+
+    if (saved.date !== today) {
+      set(yesterdayPage, { value: lastPage, date: today });
+    }
+  })();
+});
+```
+
+**Usage Example:**
+
+```tsx
+import { useAtomValue } from 'jotai';
+import { yesterdayPage, currentSavedPage } from '@/jotai/atoms';
+
+function ProgressIndicator() {
+  const yesterday = useAtomValue(yesterdayPage);
+  const current = useAtomValue(currentSavedPage);
+  const progress = current - yesterday.value;
+  
+  return <Text>Today's progress: +{progress} pages</Text>;
+}
+```
+
+---
+
+## Mushaf Configuration Atoms
+
+### mushafRiwaya
+
+Stores the selected Quran recitation style (riwaya).
+
+```typescript
+export const mushafRiwaya = createAtomWithStorage<Riwaya | undefined>(
+  'MushafRiwaya',
+  undefined,
+);
+```
+
+<ParamField path="type" type="Riwaya | undefined">
+  Riwaya type: `'hafs'` | `'warsh'` | `undefined`
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'MushafRiwaya'`
+</ParamField>
+
+<ParamField path="default" type="undefined">
+  Default value: `undefined`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { mushafRiwaya } from '@/jotai/atoms';
+
+function RiwayaSelector() {
+  const [riwaya, setRiwaya] = useAtom(mushafRiwaya);
+  
+  return (
+    <Picker
+      selectedValue={riwaya}
+      onValueChange={setRiwaya}
+    >
+      <Picker.Item label="Hafs" value="hafs" />
+      <Picker.Item label="Warsh" value="warsh" />
+    </Picker>
+  );
+}
+```
+
+---
+
+### mushafContrast
+
+Controls the contrast level of the Mushaf pages.
+
+```typescript
+export const mushafContrast = createAtomWithStorage<number>(
+  'MushafContrast',
+  0.5,
+);
+```
+
+<ParamField path="type" type="number">
+  State value type (0.0 to 1.0)
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'MushafContrast'`
+</ParamField>
+
+<ParamField path="default" type="number">
+  Default value: `0.5`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { mushafContrast } from '@/jotai/atoms';
+
+function ContrastSlider() {
+  const [contrast, setContrast] = useAtom(mushafContrast);
+  
+  return (
+    <Slider
+      value={contrast}
+      onValueChange={setContrast}
+      minimumValue={0}
+      maximumValue={1}
+    />
+  );
+}
+```
+
+---
+
+## Search & Feature Atoms
+
+### advancedSearch
+
+Toggles advanced search features (lemma, root, fuzzy matching).
+
+```typescript
+export const advancedSearch = createAtomWithStorage<boolean>(
+  'AdvancedSearch',
+  false,
+);
+```
+
+<ParamField path="type" type="boolean">
+  State value type
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'AdvancedSearch'`
+</ParamField>
+
+<ParamField path="default" type="boolean">
+  Default value: `false`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { advancedSearch } from '@/jotai/atoms';
+
+function SearchOptions() {
+  const [isAdvanced, setIsAdvanced] = useAtom(advancedSearch);
+  
+  return (
+    <View>
+      <Switch value={isAdvanced} onValueChange={setIsAdvanced} />
+      {isAdvanced && <AdvancedSearchPanel />}
+    </View>
+  );
+}
+```
+
+---
+
+### tafseerTab
+
+Stores the currently selected Tafseer (exegesis) source.
+
+```typescript
+export const tafseerTab = createAtomWithStorage<TafseerTabs>(
+  'TafseerTab',
+  'katheer',
+);
+```
+
+<ParamField path="type" type="TafseerTabs">
+  Tafseer source: `'katheer'` | `'maany'` | `'earab'` | `'baghawy'` | `'muyassar'` | `'qortoby'` | `'tabary'` | `'saady'` | `'wahidy'` | `'tanweer'` | `'waseet'`
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'TafseerTab'`
+</ParamField>
+
+<ParamField path="default" type="TafseerTabs">
+  Default value: `'katheer'` (Tafsir Ibn Kathir)
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { tafseerTab } from '@/jotai/atoms';
+
+function TafseerSelector() {
+  const [selectedTab, setSelectedTab] = useAtom(tafseerTab);
+  
+  return (
+    <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+      <Tab value="katheer">Ibn Kathir</Tab>
+      <Tab value="tabary">Al-Tabari</Tab>
+      <Tab value="qortoby">Al-Qurtubi</Tab>
+    </Tabs>
+  );
+}
+```
+
+---
+
+## Audio & Sound Atoms
+
+### flipSound
+
+Enables or disables page flip sound effects.
+
+```typescript
+export const flipSound = createAtomWithStorage<boolean>(
+  'FlipSound',
+  false,
+);
+```
+
+<ParamField path="type" type="boolean">
+  State value type
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'FlipSound'`
+</ParamField>
+
+<ParamField path="default" type="boolean">
+  Default value: `false`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtomValue } from 'jotai';
+import { flipSound } from '@/jotai/atoms';
+import { Audio } from 'expo-av';
+
+function PageNavigator() {
+  const soundEnabled = useAtomValue(flipSound);
+  
+  const playFlipSound = async () => {
+    if (soundEnabled) {
+      const { sound } = await Audio.Sound.createAsync(
+        require('@/assets/sounds/flip.mp3')
+      );
+      await sound.playAsync();
+    }
+  };
+  
+  return <button onClick={playFlipSound}>Next Page</button>;
+}
+```
+
+---
+
+## Notification & Progress Atoms
+
+### hizbNotification
+
+Stores the notification preference for Hizb completion.
+
+```typescript
+export const hizbNotification = createAtomWithStorage<number>(
+  'HizbNotification',
+  0,
+);
+```
+
+<ParamField path="type" type="number">
+  State value type (0 = disabled)
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'HizbNotification'`
+</ParamField>
+
+<ParamField path="default" type="number">
+  Default value: `0`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { hizbNotification } from '@/jotai/atoms';
+
+function NotificationSettings() {
+  const [hizbNotif, setHizbNotif] = useAtom(hizbNotification);
+  
+  return (
+    <Switch
+      value={hizbNotif > 0}
+      onValueChange={(enabled) => setHizbNotif(enabled ? 1 : 0)}
+    />
+  );
+}
+```
+
+---
+
+### dailyTrackerGoal
+
+Stores the daily reading goal in number of Hizbs.
+
+```typescript
+export const dailyTrackerGoal = createAtomWithStorage<number>(
+  'DailyTrackerGoal',
+  1,
+);
+```
+
+<ParamField path="type" type="number">
+  State value type (number of Hizbs)
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'DailyTrackerGoal'`
+</ParamField>
+
+<ParamField path="default" type="number">
+  Default value: `1`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { dailyTrackerGoal } from '@/jotai/atoms';
+
+function GoalSetter() {
+  const [goal, setGoal] = useAtom(dailyTrackerGoal);
+  
+  return (
+    <View>
+      <Text>Daily Goal: {goal} Hizb(s)</Text>
+      <Button onPress={() => setGoal(goal + 1)}>Increase</Button>
+    </View>
+  );
+}
+```
+
+---
+
+### dailyTrackerCompleted
+
+Tracks daily reading progress with automatic date-based reset.
+
+```typescript
+type DailyTrackerProgress = {
+  value: number;
+  date: string;
+};
+
+export const dailyTrackerCompleted = createAtomWithStorage<DailyTrackerProgress>(
+  'DailyTrackerCompleted',
+  {
+    value: 0,
+    date: new Date().toDateString(),
+  },
+);
+```
+
+<ParamField path="type" type="DailyTrackerProgress">
+  State value type with:
+  - `value`: Number of Hizbs completed today
+  - `date`: Date string for reset tracking
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'DailyTrackerCompleted'`
+</ParamField>
+
+<ParamField path="default" type="DailyTrackerProgress">
+  Default: `{ value: 0, date: new Date().toDateString() }`
+</ParamField>
+
+**Auto-reset Effect:**
+
+Automatically resets to 0 when a new day begins:
+
+```typescript
+observe((get, set) => {
+  (async () => {
+    const stored = await get(dailyTrackerCompleted);
+    const today = new Date().toDateString();
+
+    if (stored.date !== today) {
+      set(dailyTrackerCompleted, { value: 0, date: today });
+    }
+  })();
+});
+```
+
+**Usage Example:**
+
+```tsx
+import { useAtom, useAtomValue } from 'jotai';
+import { dailyTrackerCompleted, dailyTrackerGoal } from '@/jotai/atoms';
+
+function DailyProgress() {
+  const [completed, setCompleted] = useAtom(dailyTrackerCompleted);
+  const goal = useAtomValue(dailyTrackerGoal);
+  const percentage = (completed.value / goal) * 100;
+  
+  return (
+    <View>
+      <Text>Progress: {completed.value}/{goal} Hizbs</Text>
+      <ProgressBar value={percentage} />
+    </View>
+  );
+}
+```
+
+---
+
+### showTrackerNotification
+
+Enables or disables daily tracker notifications.
+
+```typescript
+export const showTrackerNotification = createAtomWithStorage<boolean>(
+  'ShowTrackerNotification',
+  false,
+);
+```
+
+<ParamField path="type" type="boolean">
+  State value type
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'ShowTrackerNotification'`
+</ParamField>
+
+<ParamField path="default" type="boolean">
+  Default value: `false`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { showTrackerNotification } from '@/jotai/atoms';
+
+function NotificationToggle() {
+  const [enabled, setEnabled] = useAtom(showTrackerNotification);
+  
+  return (
+    <Switch
+      value={enabled}
+      onValueChange={setEnabled}
+      label="Enable daily reminders"
+    />
+  );
+}
+```
+
+---
+
+## UI State Atoms
+
+### finishedTutorial
+
+Tracks whether the user has completed the onboarding tutorial.
+
+```typescript
+export const finishedTutorial = createAtomWithStorage<boolean | undefined>(
+  'FinishedTutorial',
+  undefined,
+);
+```
+
+<ParamField path="type" type="boolean | undefined">
+  State value type
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'FinishedTutorial'`
+</ParamField>
+
+<ParamField path="default" type="undefined">
+  Default value: `undefined` (first launch)
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { finishedTutorial } from '@/jotai/atoms';
+
+function AppRoot() {
+  const [tutorialComplete, setTutorialComplete] = useAtom(finishedTutorial);
+  
+  if (tutorialComplete === undefined || !tutorialComplete) {
+    return <TutorialScreen onComplete={() => setTutorialComplete(true)} />;
+  }
+  
+  return <MainApp />;
+}
+```
+
+---
+
+### readingBannerCollapsedState
+
+Controls the collapsed state of the reading position banner.
+
+```typescript
+export const readingBannerCollapsedState = createAtomWithStorage<boolean>(
+  'ReadingBannerCollapsedState',
+  false,
+);
+```
+
+<ParamField path="type" type="boolean">
+  State value type
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'ReadingBannerCollapsedState'`
+</ParamField>
+
+<ParamField path="default" type="boolean">
+  Default value: `false`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { readingBannerCollapsedState } from '@/jotai/atoms';
+
+function ReadingPositionBanner() {
+  const [isCollapsed, setIsCollapsed] = useAtom(readingBannerCollapsedState);
+  
+  return (
+    <View>
+      {!isCollapsed && <BannerContent />}
+      <Button onPress={() => setIsCollapsed(!isCollapsed)}>
+        {isCollapsed ? 'Show' : 'Hide'}
+      </Button>
+    </View>
+  );
+}
+```
+
+---
+
+## Version Tracking Atoms
+
+### currentAppVersion
+
+Stores the current app version for migration and update tracking.
+
+```typescript
+export const currentAppVersion = createAtomWithStorage<string | undefined>(
+  'CurrentAppVersion',
+  undefined,
+);
+```
+
+<ParamField path="type" type="string | undefined">
+  State value type (semver string)
+</ParamField>
+
+<ParamField path="key" type="string">
+  Storage key: `'CurrentAppVersion'`
+</ParamField>
+
+<ParamField path="default" type="undefined">
+  Default value: `undefined`
+</ParamField>
+
+**Usage Example:**
+
+```tsx
+import { useAtom } from 'jotai';
+import { currentAppVersion } from '@/jotai/atoms';
+import { getAppVersion } from '@/utils/getVersion';
+
+function VersionCheck() {
+  const [storedVersion, setStoredVersion] = useAtom(currentAppVersion);
+  const currentVersion = getAppVersion();
+  
+  useEffect(() => {
+    if (storedVersion !== currentVersion) {
+      // Perform migrations or show update dialog
+      setStoredVersion(currentVersion);
+    }
+  }, [storedVersion, currentVersion]);
+  
+  return <Text>Version: {currentVersion}</Text>;
+}
+```

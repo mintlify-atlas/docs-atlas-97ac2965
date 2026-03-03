@@ -1,0 +1,304 @@
+---
+title: Quran Search
+description: Powerful search with simple text, fuzzy matching, lemma and root search capabilities
+---
+
+## Overview
+
+Open Mushaf Native features a comprehensive search system powered by the `quran-search-engine` package, allowing you to find verses using multiple search modes including exact text, lemma (word forms), root letters, and fuzzy matching.
+
+## Search Modes
+
+The app supports four distinct search modes that can be combined:
+
+<CardGroup cols={2}>
+  <Card title="Simple Text Search" icon="magnifying-glass">
+    Find exact word or phrase matches in the Quranic text
+  </Card>
+  
+  <Card title="Lemma Search (الصيغة)" icon="language">
+    Find all forms and conjugations of a word (e.g., كتب, كاتب, مكتوب)
+  </Card>
+  
+  <Card title="Root Search (الجذر)" icon="tree">
+    Search by the three-letter root to find all derived words
+  </Card>
+  
+  <Card title="Fuzzy Search (التقريب)" icon="wand-sparkles">
+    Find similar words even with minor spelling variations
+  </Card>
+</CardGroup>
+
+## How to Search
+
+<Steps>
+  <Step title="Open Search Screen">
+    Navigate to the search tab in the bottom navigation
+  </Step>
+  
+  <Step title="Enter Query">
+    Type your search query in Arabic (non-Arabic characters are automatically filtered)
+  </Step>
+  
+  <Step title="Enable Options">
+    Tap the options icon to enable advanced search modes (Lemma, Root, Fuzzy)
+  </Step>
+  
+  <Step title="View Results">
+    Scroll through paginated results with color-coded highlighting
+  </Step>
+  
+  <Step title="Tap for Tafseer">
+    Tap any result to open the Tafseer popup for that verse
+  </Step>
+</Steps>
+
+## Search Interface
+
+### Input Component
+
+```tsx app/search.tsx
+<ThemedTextInput
+  variant="outlined"
+  style={styles.searchInput}
+  placeholder="البحث..."
+  value={inputText}
+  onChangeText={(text) => {
+    // Only allow Arabic characters
+    const arabicOnly = text.replace(/[^\u0621-\u064A\s]/g, '');
+    setInputText(arabicOnly);
+    handleSearch(arabicOnly);
+  }}
+/>
+```
+
+<Note>
+The search input automatically filters out non-Arabic characters, accepting only Arabic letters (Unicode range U+0621 to U+064A) and spaces.
+</Note>
+
+### Advanced Options Panel
+
+```tsx
+<ThemedView style={styles.advancedOptions}>
+  <View style={styles.optionRow}>
+    <Pressable
+      style={[
+        styles.optionButton,
+        advancedOptions.lemma && styles.optionActive,
+      ]}
+      onPress={() => toggleOption('lemma')}
+    >
+      <ThemedText>الصيغة</ThemedText>
+    </Pressable>
+    
+    <Pressable onPress={() => toggleOption('root')}>
+      <ThemedText>الجذر</ThemedText>
+    </Pressable>
+    
+    <Pressable onPress={() => toggleOption('fuzzy')}>
+      <ThemedText>التقريب</ThemedText>
+    </Pressable>
+  </View>
+</ThemedView>
+```
+
+## Search Engine Implementation
+
+### Search Hook
+
+```typescript hooks/useQuranSearch.ts
+const response: SearchResponse = search(
+  arabicOnly,
+  quranData,
+  morphologyMap,
+  wordMap,
+  {
+    lemma: advancedOptions.lemma,
+    root: advancedOptions.root,
+    fuzzy: advancedOptions.fuzzy,
+  },
+  {
+    page,
+    limit: PAGE_SIZE, // 50 results per page
+  },
+);
+```
+
+### Morphology Data
+
+The search uses Quranic morphology data for advanced features:
+
+```typescript app/search.tsx
+import morphologyDataRaw from '@/assets/search/quran-morphology.json';
+import wordMapJSON from '@/assets/search/word-map.json';
+
+const MORPH = morphologyDataRaw;
+const WORD_MAP = wordMapJSON;
+```
+
+<Tip>
+Morphology data enables the app to understand word roots, lemmas, and grammatical forms for intelligent searching.
+</Tip>
+
+## Search Results
+
+### Result Counts
+
+The search displays detailed count information:
+
+```typescript
+const counterText =
+  query.trim() === ''
+    ? ''
+    : selectedLabels.length > 0
+      ? `عدد النتائج: ${counts.total} (${selectedLabels.join('، ')})`
+      : `عدد النتائج: ${counts.total} (نص)`;
+```
+
+Counts are broken down by search type:
+- `counts.simple` - Exact text matches
+- `counts.lemma` - Lemma matches
+- `counts.root` - Root matches  
+- `counts.fuzzy` - Fuzzy matches
+- `counts.total` - Total results across all enabled modes
+
+### Pagination
+
+Results are loaded in pages of 50 items with infinite scroll:
+
+```typescript
+const PAGE_SIZE = 50;
+
+<FlatList
+  data={results}
+  onEndReached={() => {
+    if (!hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    setPage((prev) => prev + 1);
+  }}
+  onEndReachedThreshold={0.5}
+/>
+```
+
+<Accordion title="Why paginate results?">
+  Pagination improves performance by loading results in chunks rather than all at once. This is especially important for common words that may have hundreds or thousands of matches.
+</Accordion>
+
+## Color-Coded Highlighting
+
+Search results use color coding to distinguish match types:
+
+```typescript hooks/useQuranSearch.ts
+const getPositiveTokens = (
+  verse: QuranText,
+  mode: 'text' | 'lemma' | 'root' | 'fuzzy',
+): string[] => {
+  const matchedTokens = (verse as any).matchedTokens || [];
+  const tokenTypes = (verse as any).tokenTypes || {};
+
+  if (mode === 'text') {
+    return matchedTokens.filter(
+      (token: string) => tokenTypes[token] === 'exact',
+    );
+  }
+  if (mode === 'lemma') {
+    return matchedTokens.filter(
+      (token: string) => tokenTypes[token] === 'lemma',
+    );
+  }
+  // ... and so on for root and fuzzy
+};
+```
+
+### Color Legend
+
+The `SearchColorLegend` component displays the meaning of each highlight color, helping users understand match types at a glance.
+
+## Performance Optimizations
+
+### Debounced Input
+
+```typescript
+const handleSearch = useDebounce((text: string) => {
+  setPage(1);
+  setResults([]);
+  setHasMore(false);
+  setQuery(text);
+}, 200); // Wait 200ms after user stops typing
+```
+
+<Note>
+Search is debounced by 200ms to avoid excessive searches as you type, improving performance and reducing unnecessary processing.
+</Note>
+
+### Morphology Map Conversion
+
+The morphology data is converted to a Map for O(1) lookup performance:
+
+```typescript
+const morphologyMap = useMemo(() => {
+  const map = new Map<number, MorphologyAya>();
+  for (const morph of morphologyData) {
+    map.set(morph.gid, morph);
+  }
+  return map;
+}, [morphologyData]);
+```
+
+### Result Accumulation
+
+```typescript
+setResults((prev) =>
+  page === 1 ? pageResults : [...prev, ...pageResults],
+);
+```
+
+New results are appended to existing ones for infinite scroll, but reset when starting a new search.
+
+## Search Examples
+
+<CardGroup cols={2}>
+  <Card title="Exact Phrase" icon="quote-right">
+    Search for "الحمد لله" to find verses with this exact phrase
+  </Card>
+  
+  <Card title="Word Forms" icon="shapes">
+    Enable Lemma to find "صلاة", "يصلي", "صلوا" with one search
+  </Card>
+  
+  <Card title="Root Words" icon="seedling">
+    Enable Root to search "كتب" and find "كتاب", "مكتوب", "كاتب"
+  </Card>
+  
+  <Card title="Fuzzy Matching" icon="bullseye">
+    Enable Fuzzy to find similar spellings even with minor variations
+  </Card>
+</CardGroup>
+
+## Integration with Tafseer
+
+```tsx
+<SearchResultItem
+  item={item}
+  query={query}
+  advancedOptions={advancedOptions}
+  wordMap={WORD_MAP}
+  getPositiveTokens={getPositiveTokens}
+  onSelectAya={(selected: { aya: number; surah: number }) =>
+    setSelectedAya(selected)
+  }
+/>
+
+<TafseerPopup
+  show={selectedAya.aya > 0}
+  setShow={() => setSelectedAya({ aya: 0, surah: 0 })}
+  aya={selectedAya.aya}
+  surah={selectedAya.surah}
+/>
+```
+
+Tapping any search result opens the Tafseer popup for that verse, allowing you to read commentary without losing your search results.
+
+<Tip>
+Combine multiple search modes for powerful queries. For example, enable both Lemma and Root to cast a wider net when searching for word families.
+</Tip>

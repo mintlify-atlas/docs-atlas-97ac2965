@@ -1,0 +1,793 @@
+---
+title: Custom Hooks
+description: React hooks for managing Quran data, UI state, and platform-specific behaviors in Open Mushaf Native
+---
+
+## Overview
+
+Open Mushaf Native provides a comprehensive set of custom React hooks that handle everything from Quran metadata loading to gesture handling and theme management.
+
+## Data Management Hooks
+
+### useQuranMetadata
+
+Loads Quran metadata including surah data, hizb data, aya coordinates, and Quran text based on the selected riwaya (Hafs or Warsh).
+
+```typescript
+function useQuranMetadata(): QuranMetadata
+```
+
+<ResponseField name="return" type="QuranMetadata">
+  <ResponseField name="thumnData" type="Thumn[]">
+    Array of thumn (eighth of a hizb) metadata
+  </ResponseField>
+  <ResponseField name="hizbData" type="Hizb[]">
+    Array of hizb (half juz) metadata
+  </ResponseField>
+  <ResponseField name="surahData" type="Surah[]">
+    Array of surah metadata including names and starting pages
+  </ResponseField>
+  <ResponseField name="ayaData" type="Page[]">
+    Array of aya coordinates for each page
+  </ResponseField>
+  <ResponseField name="specsData" type="Specs">
+    Mushaf specifications (dimensions, margins, etc.)
+  </ResponseField>
+  <ResponseField name="chapterData" type="Chapter[]">
+    Chapter metadata
+  </ResponseField>
+  <ResponseField name="quranData" type="QuranText[]">
+    Complete Quran text data
+  </ResponseField>
+  <ResponseField name="isLoading" type="boolean">
+    Whether metadata is currently loading
+  </ResponseField>
+  <ResponseField name="error" type="string | null">
+    Error message if loading failed
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import useQuranMetadata from '@/hooks/useQuranMetadata';
+
+function QuranViewer() {
+  const { surahData, ayaData, isLoading, error } = useQuranMetadata();
+  
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage>{error}</ErrorMessage>;
+  
+  return <MushafView surahs={surahData} ayas={ayaData} />;
+}
+```
+
+---
+
+### useQuranSearch
+
+Performs advanced Quran search with support for exact text, lemma, root, and fuzzy matching using the quran-search-engine package.
+
+```typescript
+function useQuranSearch({
+  quranData,
+  morphologyData,
+  wordMap,
+  query,
+  advancedOptions,
+  fuseInstance,
+  page,
+  limit
+}): SearchResults
+```
+
+<ParamField path="quranData" type="QuranText[] | null" required>
+  Quran text data array
+</ParamField>
+
+<ParamField path="morphologyData" type="MorphologyAya[]" required>
+  Morphology data for advanced search
+</ParamField>
+
+<ParamField path="wordMap" type="WordMap" required>
+  Word mapping for root and lemma search
+</ParamField>
+
+<ParamField path="query" type="string" required>
+  Search query in Arabic
+</ParamField>
+
+<ParamField path="advancedOptions" type="AdvancedOptions" required>
+  Search options:
+  - `lemma`: Enable lemma-based search
+  - `root`: Enable root-based search
+  - `fuzzy`: Enable fuzzy matching
+</ParamField>
+
+<ParamField path="page" type="number" required>
+  Current page number for pagination
+</ParamField>
+
+<ParamField path="limit" type="number" required>
+  Number of results per page
+</ParamField>
+
+<ResponseField name="return" type="SearchResults">
+  <ResponseField name="pageResults" type="QuranText[]">
+    Search results for the current page
+  </ResponseField>
+  <ResponseField name="counts" type="Counts">
+    Result counts by search type:
+    - `simple`: Exact text matches
+    - `lemma`: Lemma matches
+    - `root`: Root matches
+    - `fuzzy`: Fuzzy matches
+    - `total`: Total results
+  </ResponseField>
+  <ResponseField name="getPositiveTokens" type="function">
+    Function to get highlighted tokens for a verse
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import useQuranSearch from '@/hooks/useQuranSearch';
+
+function SearchPage() {
+  const { pageResults, counts } = useQuranSearch({
+    quranData,
+    morphologyData,
+    wordMap,
+    query: 'الله',
+    advancedOptions: { lemma: true, root: false, fuzzy: false },
+    fuseInstance: null,
+    page: 1,
+    limit: 10
+  });
+  
+  return (
+    <div>
+      <p>Found {counts.total} results</p>
+      {pageResults.map(result => (
+        <SearchResult key={result.gid} verse={result} />
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+### useTafseerContent
+
+Retrieves and formats Tafseer (exegesis) text for a specific aya and surah.
+
+```typescript
+function useTafseerContent({
+  tafseerData,
+  surah,
+  aya
+}): string
+```
+
+<ParamField path="tafseerData" type="TafseerAya[] | null" required>
+  Array of Tafseer data or null if not loaded
+</ParamField>
+
+<ParamField path="surah" type="number" required>
+  Surah number (1-114)
+</ParamField>
+
+<ParamField path="aya" type="number" required>
+  Aya number within the surah
+</ParamField>
+
+**Returns:** HTML string containing the Tafseer text, or a default message if not found.
+
+**Usage Example:**
+
+```tsx
+import { useTafseerContent } from '@/hooks/useTafseerContent';
+
+function TafseerView({ surah, aya, tafseerData }) {
+  const tafseerHTML = useTafseerContent({ tafseerData, surah, aya });
+  
+  return <WebView html={tafseerHTML} />;
+}
+```
+
+---
+
+### hasNoTafseerContent
+
+Checks if Tafseer text is available for a specific aya.
+
+```typescript
+function hasNoTafseerContent({
+  tafseerData,
+  surah,
+  aya
+}): boolean
+```
+
+<ParamField path="tafseerData" type="TafseerAya[] | null" required>
+  Array of Tafseer data or null if not loaded
+</ParamField>
+
+<ParamField path="surah" type="number" required>
+  Surah number (1-114)
+</ParamField>
+
+<ParamField path="aya" type="number" required>
+  Aya number within the surah
+</ParamField>
+
+**Returns:** `true` if no Tafseer content is found or if the text is empty, `false` otherwise.
+
+**Usage Example:**
+
+```tsx
+import { hasNoTafseerContent } from '@/hooks/useTafseerContent';
+
+function TafseerButton({ surah, aya, tafseerData }) {
+  const noTafseer = hasNoTafseerContent({ tafseerData, surah, aya });
+  
+  return (
+    <Button disabled={noTafseer}>
+      {noTafseer ? 'No Tafseer Available' : 'View Tafseer'}
+    </Button>
+  );
+}
+```
+
+---
+
+## Page & Navigation Hooks
+
+### useCurrentPage
+
+Manages the current Quran page state, syncing between URL parameters and persisted storage.
+
+```typescript
+function useCurrentPage(): CurrentPageState
+```
+
+<ResponseField name="return" type="CurrentPageState">
+  <ResponseField name="currentPage" type="number">
+    The active page number (may be temporary or saved)
+  </ResponseField>
+  <ResponseField name="currentSavedPage" type="number">
+    The permanently saved page number
+  </ResponseField>
+  <ResponseField name="setCurrentPage" type="(page: number) => void">
+    Function to update the current page
+  </ResponseField>
+  <ResponseField name="isTemporaryNavigation" type="boolean">
+    Whether viewing a temporary page different from saved position
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import useCurrentPage from '@/hooks/useCurrentPage';
+
+function PageNavigator() {
+  const { currentPage, setCurrentPage, isTemporaryNavigation } = useCurrentPage();
+  
+  return (
+    <div>
+      <p>Page {currentPage} {isTemporaryNavigation && '(preview)'}</p>
+      <button onClick={() => setCurrentPage(currentPage + 1)}>Next</button>
+    </div>
+  );
+}
+```
+
+---
+
+### usePageOverlay
+
+Generates interactive overlay elements for aya selection on a Mushaf page.
+
+```typescript
+function usePageOverlay({
+  index,
+  dimensions
+}): PageOverlayResult
+```
+
+<ParamField path="index" type="number" required>
+  Page index (0-based)
+</ParamField>
+
+<ParamField path="dimensions" type="object" required>
+  Page dimensions:
+  - `customPageWidth`: Width of the page in pixels
+  - `customPageHeight`: Height of the page in pixels
+</ParamField>
+
+<ResponseField name="return" type="PageOverlayResult">
+  <ResponseField name="overlay" type="OverlayElement[]">
+    Array of overlay elements with:
+    - `x`: X coordinate
+    - `y`: Y coordinate
+    - `width`: Width of the overlay
+    - `aya`: Aya number
+    - `surah`: Surah number
+  </ResponseField>
+  <ResponseField name="lineHeight" type="number">
+    Calculated line height for the page
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import usePageOverlay from '@/hooks/usePageOverLay';
+
+function InteractivePage({ pageIndex, width, height }) {
+  const { overlay } = usePageOverlay({
+    index: pageIndex,
+    dimensions: { customPageWidth: width, customPageHeight: height }
+  });
+  
+  return overlay.map((element, i) => (
+    <TouchableOverlay
+      key={i}
+      x={element.x}
+      y={element.y}
+      width={element.width}
+      onPress={() => handleAyaPress(element.surah, element.aya)}
+    />
+  ));
+}
+```
+
+---
+
+## Image & Asset Hooks
+
+### useImagesArray
+
+Loads the Mushaf page image asset for the current page and riwaya.
+
+```typescript
+function useImagesArray(): ImageAssetResult
+```
+
+<ResponseField name="return" type="ImageAssetResult">
+  <ResponseField name="asset" type="Asset | null">
+    Expo Asset object for the current page image
+  </ResponseField>
+  <ResponseField name="isLoading" type="boolean">
+    Whether the asset is currently loading
+  </ResponseField>
+  <ResponseField name="error" type="string | null">
+    Error message if loading failed
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import useImagesArray from '@/hooks/useImagesArray';
+
+function MushafPage() {
+  const { asset, isLoading, error } = useImagesArray();
+  
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage>{error}</ErrorMessage>;
+  
+  return <Image source={{ uri: asset.uri }} />;
+}
+```
+
+---
+
+### useImagePreloader
+
+Preloads adjacent Mushaf pages for smoother navigation.
+
+```typescript
+function useImagePreloader(currentPage: number): null
+```
+
+<ParamField path="currentPage" type="number" required>
+  The current page number
+</ParamField>
+
+**Behavior:**
+- Preloads current page, previous 1 page, and next 2 pages
+- Automatically manages cache to prevent memory issues
+- Returns null (side-effects only)
+
+**Usage Example:**
+
+```tsx
+import useImagePreloader from '@/hooks/useImagePreloader';
+
+function MushafViewer() {
+  const { currentPage } = useCurrentPage();
+  useImagePreloader(currentPage); // Preloads adjacent pages
+  
+  return <PageView page={currentPage} />;
+}
+```
+
+---
+
+## Gesture & Interaction Hooks
+
+### usePanGestureHandler
+
+Handles pan gestures for page navigation with smooth animations.
+
+```typescript
+function usePanGestureHandler(
+  currentPage: number,
+  onPageChange: (page: number) => void,
+  maxPages: number
+): GestureHandlerResult
+```
+
+<ParamField path="currentPage" type="number" required>
+  Current page number
+</ParamField>
+
+<ParamField path="onPageChange" type="(page: number) => void" required>
+  Callback function when page changes
+</ParamField>
+
+<ParamField path="maxPages" type="number" required>
+  Maximum number of pages
+</ParamField>
+
+<ResponseField name="return" type="GestureHandlerResult">
+  <ResponseField name="translateX" type="SharedValue<number>">
+    Reanimated shared value for X translation
+  </ResponseField>
+  <ResponseField name="panGestureHandler" type="Gesture">
+    React Native Gesture Handler pan gesture
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import { usePanGestureHandler } from '@/hooks/usePanGestureHandler';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+
+function SwipeablePage() {
+  const { translateX, panGestureHandler } = usePanGestureHandler(
+    currentPage,
+    (page) => setCurrentPage(page),
+    604
+  );
+  
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }]
+  }));
+  
+  return (
+    <GestureDetector gesture={panGestureHandler}>
+      <Animated.View style={animatedStyle}>
+        <PageContent />
+      </Animated.View>
+    </GestureDetector>
+  );
+}
+```
+
+---
+
+## UI & Theme Hooks
+
+### useColors
+
+Provides theme-aware color values based on the current color scheme.
+
+```typescript
+function useColors(): ColorScheme
+```
+
+<ResponseField name="return" type="ColorScheme">
+  <ResponseField name="backgroundColor" type="string">
+    Background color for the current theme
+  </ResponseField>
+  <ResponseField name="tintColor" type="string">
+    Tint color for UI elements
+  </ResponseField>
+  <ResponseField name="textColor" type="string">
+    Primary text color
+  </ResponseField>
+  <ResponseField name="iconColor" type="string">
+    Icon color
+  </ResponseField>
+  <ResponseField name="primaryColor" type="string">
+    Primary brand color
+  </ResponseField>
+  <ResponseField name="primaryLightColor" type="string">
+    Light variant of primary color
+  </ResponseField>
+  <ResponseField name="secondaryColor" type="string">
+    Secondary color
+  </ResponseField>
+  <ResponseField name="cardColor" type="string">
+    Card background color
+  </ResponseField>
+  <ResponseField name="dangerColor" type="string">
+    Danger/error color
+  </ResponseField>
+  <ResponseField name="dangerLightColor" type="string">
+    Light variant of danger color
+  </ResponseField>
+  <ResponseField name="ivoryColor" type="string">
+    Ivory color for special backgrounds
+  </ResponseField>
+  <ResponseField name="directColor" type="string">
+    Highlight color for exact search matches
+  </ResponseField>
+  <ResponseField name="relatedColor" type="string">
+    Highlight color for related matches (lemma/root)
+  </ResponseField>
+  <ResponseField name="fuzzyColor" type="string">
+    Highlight color for fuzzy matches
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import { useColors } from '@/hooks/useColors';
+
+function ThemedButton() {
+  const { primaryColor, textColor } = useColors();
+  
+  return (
+    <View style={{ backgroundColor: primaryColor }}>
+      <Text style={{ color: textColor }}>Submit</Text>
+    </View>
+  );
+}
+```
+
+---
+
+### useThemeColor
+
+Retrieves a specific theme color with optional overrides.
+
+```typescript
+function useThemeColor(
+  props: { light?: string; dark?: string },
+  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+): string
+```
+
+<ParamField path="props" type="object" required>
+  Optional color overrides:
+  - `light`: Override for light mode
+  - `dark`: Override for dark mode
+</ParamField>
+
+<ParamField path="colorName" type="ColorName" required>
+  Name of the color from the Colors constants
+</ParamField>
+
+**Returns:** The color value as a string.
+
+**Usage Example:**
+
+```tsx
+import { useThemeColor } from '@/hooks/useThemeColor';
+
+function CustomComponent({ lightColor, darkColor }) {
+  const backgroundColor = useThemeColor(
+    { light: lightColor, dark: darkColor },
+    'background'
+  );
+  
+  return <View style={{ backgroundColor }} />;
+}
+```
+
+---
+
+### useNotificationStyles
+
+Provides predefined styles for different notification types.
+
+```typescript
+function useNotificationStyles(): NotificationStyles
+```
+
+<ResponseField name="return" type="NotificationStyles">
+  <ResponseField name="neutral" type="StyleObject">
+    Neutral notification style (gray)
+  </ResponseField>
+  <ResponseField name="success" type="StyleObject">
+    Success notification style (green)
+  </ResponseField>
+  <ResponseField name="error" type="StyleObject">
+    Error notification style (red)
+  </ResponseField>
+  <ResponseField name="info" type="StyleObject">
+    Info notification style (blue)
+  </ResponseField>
+</ResponseField>
+
+Each style object contains:
+- `borderColor`: Border color
+- `backgroundColor`: Background color
+- `color`: Text color
+
+**Usage Example:**
+
+```tsx
+import useNotificationStyles from '@/hooks/useNotificationStyles';
+
+function Notification({ type, message }) {
+  const styles = useNotificationStyles();
+  const style = styles[type];
+  
+  return (
+    <View style={{
+      borderColor: style.borderColor,
+      backgroundColor: style.backgroundColor
+    }}>
+      <Text style={{ color: style.color }}>{message}</Text>
+    </View>
+  );
+}
+```
+
+---
+
+## Platform & Device Hooks
+
+### useOrientation
+
+Detects the current device orientation.
+
+```typescript
+function useOrientation(): OrientationResult
+```
+
+<ResponseField name="return" type="OrientationResult">
+  <ResponseField name="isLandscape" type="boolean">
+    True if device is in landscape mode
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import useOrientation from '@/hooks/useOrientation';
+
+function ResponsiveLayout() {
+  const { isLandscape } = useOrientation();
+  
+  return (
+    <View style={{ flexDirection: isLandscape ? 'row' : 'column' }}>
+      <Content />
+    </View>
+  );
+}
+```
+
+---
+
+### useColorScheme
+
+Re-export of React Native's useColorScheme hook.
+
+```typescript
+function useColorScheme(): 'light' | 'dark' | null
+```
+
+**Returns:** Current color scheme preference: `'light'`, `'dark'`, or `null` if not available.
+
+**Usage Example:**
+
+```tsx
+import { useColorScheme } from '@/hooks/useColorScheme';
+
+function ThemedIcon() {
+  const colorScheme = useColorScheme();
+  const iconColor = colorScheme === 'dark' ? '#fff' : '#000';
+  
+  return <Icon color={iconColor} />;
+}
+```
+
+---
+
+### useUpdateAndroidWidget
+
+Updates the Android home screen widget with current reading progress.
+
+```typescript
+function useUpdateAndroidWidget(): WidgetUpdater
+```
+
+<ResponseField name="return" type="WidgetUpdater">
+  <ResponseField name="updateAndroidWidget" type="() => Promise<void>">
+    Async function to update the widget
+  </ResponseField>
+</ResponseField>
+
+**Behavior:**
+- Updates widget with current page, surah, hizb, and daily progress
+- Validates daily tracker data
+- Handles both Hafs and Warsh riwaya metadata
+- Android-only (no-op on other platforms)
+
+**Usage Example:**
+
+```tsx
+import { useUpdateAndroidWidget } from '@/hooks/useUpdateAndroidWidget';
+
+function PageNavigator() {
+  const { updateAndroidWidget } = useUpdateAndroidWidget();
+  
+  const handlePageChange = async (page: number) => {
+    setCurrentPage(page);
+    await updateAndroidWidget();
+  };
+  
+  return <Navigation onPageChange={handlePageChange} />;
+}
+```
+
+---
+
+## Utility Hooks
+
+### useDebounce
+
+Debounces a function call to prevent excessive executions.
+
+```typescript
+function useDebounce<T extends (...args: any[]) => void>(
+  fn: T,
+  delay: number
+): T
+```
+
+<ParamField path="fn" type="function" required>
+  The function to debounce
+</ParamField>
+
+<ParamField path="delay" type="number" required>
+  Delay in milliseconds
+</ParamField>
+
+**Returns:** Debounced version of the function.
+
+**Usage Example:**
+
+```tsx
+import useDebounce from '@/hooks/useDebounce';
+
+function SearchInput() {
+  const [query, setQuery] = useState('');
+  
+  const performSearch = (searchQuery: string) => {
+    // Execute search
+  };
+  
+  const debouncedSearch = useDebounce(performSearch, 500);
+  
+  return (
+    <input
+      onChange={(e) => {
+        setQuery(e.target.value);
+        debouncedSearch(e.target.value);
+      }}
+    />
+  );
+}
+```

@@ -1,0 +1,433 @@
+---
+title: Progressive Web App (PWA)
+description: Configure and deploy Open Mushaf Native as a Progressive Web App with offline support
+---
+
+## Overview
+
+Open Mushaf Native is configured as a Progressive Web App (PWA) with offline support, installability, and native-like experience using Workbox for service worker management.
+
+## PWA Features
+
+- **Offline Support**: Read Quran pages offline after they're cached
+- **Installable**: Add to home screen on mobile devices
+- **Fast Loading**: Cached assets load instantly
+- **Background Sync**: Update content when connection is available
+- **Push Notifications**: Stay updated with app changes
+
+## Service Worker Configuration
+
+The service worker is configured using Workbox. The configuration is in `workbox-config.js`:
+
+```javascript
+module.exports = {
+  globDirectory: 'dist/',
+  globPatterns: ['**/*.{html,js,css,png,jpg,jpeg,svg,ico,json,ttf,woff,woff2}'],
+  globIgnores: [
+    '**/service-worker.js',
+    'workbox-*.js',
+    'assets/mushaf-data/**/*',
+  ],
+  swSrc: 'public/service-worker.js',
+  swDest: 'dist/service-worker.js',
+  maximumFileSizeToCacheInBytes: 50 * 1024 * 1024, // 50MB
+};
+```
+
+### Configuration Breakdown
+
+- **globDirectory**: Source directory for files to cache
+- **globPatterns**: File types to include in precache
+- **globIgnores**: Files to exclude from precaching (service worker itself and large Quran data)
+- **swSrc**: Source service worker file with custom logic
+- **swDest**: Output location for the compiled service worker
+- **maximumFileSizeToCacheInBytes**: Maximum size for cached files (50MB to accommodate large assets)
+
+<Note>
+  Mushaf data files are excluded from precaching and are cached on-demand when users view pages.
+</Note>
+
+## Caching Strategies
+
+The service worker implements multiple caching strategies defined in `public/service-worker.js`:
+
+### 1. Precache Strategy
+
+```javascript
+const { precacheAndRoute } = workbox.precaching;
+precacheAndRoute(self.__WB_MANIFEST);
+```
+
+Precaches all static assets during service worker installation.
+
+### 2. Google Fonts Caching
+
+```javascript
+// Cache font stylesheets
+registerRoute(
+  ({ url }) => url.origin === 'https://fonts.googleapis.com',
+  new StaleWhileRevalidate({
+    cacheName: 'google-fonts-stylesheets',
+  })
+);
+
+// Cache font files
+registerRoute(
+  ({ url }) => url.origin === 'https://fonts.gstatic.com',
+  new CacheFirst({
+    cacheName: 'google-fonts-webfonts',
+    plugins: [
+      new ExpirationPlugin({
+        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+        maxEntries: 30,
+      }),
+    ],
+  })
+);
+```
+
+### 3. Quran Images (On-Demand)
+
+```javascript
+registerRoute(
+  ({ request }) => {
+    const url = request.url;
+    return url.includes('/mushaf-data/') || url.includes('/assets/');
+  },
+  new CacheFirst({
+    cacheName: 'quran-images',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+    ],
+  })
+);
+```
+
+<Note>
+  Quran page images are cached only when users view them, keeping the initial cache size small.
+</Note>
+
+### 4. UI Assets
+
+```javascript
+registerRoute(
+  ({ request }) => {
+    const url = request.url;
+    return url.includes('/icons/') || 
+           url.includes('/images/') || 
+           url.includes('/tutorial/');
+  },
+  new CacheFirst({
+    cacheName: 'ui-assets',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 30 * 24 * 60 * 60,
+      }),
+    ],
+  })
+);
+```
+
+### 5. Tafseer Data
+
+```javascript
+registerRoute(
+  ({ request }) =>
+    request.url.includes('/tafaseer/') && request.url.endsWith('.json'),
+  new CacheFirst({
+    cacheName: 'tafseer-data',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 20,
+        maxAgeSeconds: 60 * 24 * 60 * 60, // 60 days
+      }),
+    ],
+  })
+);
+```
+
+### 6. App Pages
+
+```javascript
+registerRoute(
+  ({ url }) => {
+    const appRoutes = [
+      '/settings', '/about', '/navigation',
+      '/search', '/tutorial', '/lists',
+      '/contact', '/privacy'
+    ];
+    return appRoutes.some(
+      (route) => url.pathname === route || url.pathname.endsWith(route)
+    );
+  },
+  new StaleWhileRevalidate({
+    cacheName: 'app-pages',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 15,
+        maxAgeSeconds: 7 * 24 * 60 * 60,
+      }),
+    ],
+  })
+);
+```
+
+## Service Worker Lifecycle
+
+The service worker includes custom lifecycle management:
+
+### Install Event
+
+```javascript
+self.addEventListener('install', (event) => {
+  // Notify clients
+  self.clients.matchAll().then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({
+        type: 'SW_STATE_UPDATE',
+        message: 'جاري تثبيت التطبيق...',
+        state: 'installing',
+      });
+    });
+  });
+
+  // Skip waiting
+  self.skipWaiting();
+
+  // Precache offline page
+  event.waitUntil(
+    caches.open('offline-cache').then((cache) => {
+      return cache.add('/offline.html');
+    })
+  );
+});
+```
+
+### Activate Event
+
+```javascript
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      // Clean up old caches
+      return Promise.all(
+        cacheNames
+          .filter((cacheName) => {
+            return cacheName.startsWith('workbox-') &&
+                   !cacheName.includes('quran-images') &&
+                   !cacheName.includes('google-fonts');
+          })
+          .map((cacheName) => caches.delete(cacheName))
+      );
+    }).then(() => {
+      // Claim clients and notify
+      return clients.claim();
+    })
+  );
+});
+```
+
+## Web App Manifest
+
+The PWA manifest is served at `/manifest.json` and linked in `app/+html.tsx`:
+
+```tsx
+<link rel="manifest" href="/manifest.json" />
+```
+
+### Safari-Specific PWA Support
+
+The app includes Safari-specific meta tags:
+
+```tsx
+<meta name="mobile-web-app-capable" content="yes" />
+<meta
+  name="apple-mobile-web-app-status-bar-style"
+  content="black-translucent"
+/>
+<link
+  rel="apple-touch-icon"
+  href="icons/apple-touch-icon.png"
+  sizes="180x180"
+/>
+```
+
+### Splash Screens
+
+Custom splash screens for different iOS devices:
+
+```tsx
+<link
+  rel="apple-touch-startup-image"
+  href="splash/apple-splash-2048-2732.png"
+  media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+/>
+```
+
+## Building PWA
+
+### Development Build
+
+For development without PWA features:
+
+```bash
+yarn web:export
+```
+
+### Production PWA Build
+
+To build with full PWA support:
+
+```bash
+yarn web:export:pwa
+# or
+expo export -p web && npx workbox-cli generateSW workbox-config.js
+```
+
+### Deploy PWA
+
+Deploy to Firebase with optimizations:
+
+```bash
+yarn deploy:live
+```
+
+This runs the `predeploy` script which:
+1. Exports the web build
+2. Injects the Workbox manifest into the service worker
+3. Deploys to Firebase Hosting
+
+## User Notifications
+
+The service worker communicates with users through a notification system defined in `app/+html.tsx`:
+
+```tsx
+<div id="sw-notification" style={{...}}>
+  <div id="sw-spinner" style={{...}}></div>
+  <span id="sw-status-message"></span>
+</div>
+```
+
+### Notification Types
+
+- **Installing**: "جاري تثبيت التطبيق..."
+- **Activating**: "جاري تفعيل التطبيق..."
+- **Activated**: "تم تحديث التطبيق بنجاح!"
+- **Offline**: "أنت غير متصل بالإنترنت"
+- **Error**: Error messages
+
+## Offline Support
+
+The service worker includes an offline fallback:
+
+```javascript
+workbox.routing.setCatchHandler(async ({ event }) => {
+  if (event.request.mode === 'navigate') {
+    const offlineCache = await caches.open('offline-cache');
+    const offlinePage = await offlineCache.match('/offline.html');
+    
+    if (offlinePage) {
+      // Notify user they're offline
+      const clients = await self.clients.matchAll();
+      clients.forEach((client) => {
+        client.postMessage({
+          type: 'SW_STATE_UPDATE',
+          message: 'أنت غير متصل بالإنترنت',
+          duration: 5000,
+        });
+      });
+      
+      return offlinePage;
+    }
+  }
+  
+  return Response.error();
+});
+```
+
+## Testing PWA Features
+
+<Steps>
+  <Step title="Build for Production">
+    ```bash
+    yarn web:export:pwa
+    ```
+  </Step>
+
+  <Step title="Serve Locally">
+    ```bash
+    yarn web:serve
+    ```
+  </Step>
+
+  <Step title="Test in Chrome DevTools">
+    1. Open Chrome DevTools
+    2. Go to Application tab
+    3. Check Service Workers
+    4. Test offline mode
+    5. Verify cache storage
+  </Step>
+
+  <Step title="Test Installation">
+    Look for the install prompt in the browser address bar or use the browser menu to install.
+  </Step>
+</Steps>
+
+## Lighthouse Audit
+
+Run a Lighthouse audit to verify PWA compliance:
+
+```bash
+# Install Lighthouse CLI
+npm install -g lighthouse
+
+# Run audit
+lighthouse https://your-domain.com --view
+```
+
+Ensure your app scores well on:
+- Performance
+- PWA features
+- Accessibility
+- Best Practices
+- SEO
+
+## Troubleshooting
+
+### Service Worker Not Updating
+
+1. Clear the cache:
+   ```bash
+   rm -rf dist
+   yarn web:export:pwa
+   ```
+
+2. In Chrome DevTools > Application > Service Workers, click "Unregister"
+
+3. Hard reload the page (Ctrl/Cmd + Shift + R)
+
+### Cache Size Issues
+
+If you hit browser cache limits:
+
+1. Reduce `maxEntries` in cache expiration plugins
+2. Add more files to `globIgnores` in `workbox-config.js`
+3. Implement cache clearing on app updates
+
+### Offline Page Not Showing
+
+Ensure the offline page exists and is cached:
+
+```javascript
+caches.open('offline-cache').then((cache) => {
+  return cache.add('/offline.html');
+});
+```
+
+<Warning>
+  Always test PWA features in production mode. Development servers may not accurately reflect PWA behavior.
+</Warning>

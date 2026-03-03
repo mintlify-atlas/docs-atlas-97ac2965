@@ -1,0 +1,162 @@
+---
+title: Navigation
+description: Navigate through the Quran by Surah, Ayah, page number, Juz, and Hizb
+icon: map
+---
+
+Open Mushaf Native provides multiple navigation methods to help you browse the Quran efficiently.
+
+## Navigation Screen
+
+Access the navigation screen by tapping the navigation icon in the top menu (navigate-circle-outline icon). The navigation screen is located at `/navigation` in the app.
+
+### Page Navigation
+
+Navigate directly to any page number in the Mushaf.
+
+<Steps>
+  <Step title="Open Navigation">
+    Tap the navigation icon in the top menu to open the navigation screen.
+  </Step>
+  <Step title="Select Page Number">
+    In the "الانتقال إلى الصفحة" (Navigate to Page) section, you can:
+    - Tap any page number from the pagination list
+    - Click the edit icon to enter a specific page number
+    - Type the page number and press the check icon or submit
+  </Step>
+  <Step title="Navigate">
+    The app will navigate to the selected page in temporary mode.
+  </Step>
+</Steps>
+
+<Info>
+The page navigator shows the current page, first page, last page, and pages around your current position with ellipsis (...) for gaps.
+</Info>
+
+#### Direct Page Input
+
+For quick navigation:
+
+<Steps>
+  <Step title="Click Edit Icon">
+    Click the edit/pencil icon below the page numbers.
+  </Step>
+  <Step title="Enter Page Number">
+    A text input will appear. Enter the desired page number (1-604 for Hafs, varies for other Riwayat).
+  </Step>
+  <Step title="Submit">
+    Press the check icon or submit on your keyboard to navigate.
+  </Step>
+</Steps>
+
+<Note>
+On compact views (small screens), you'll see a compact page indicator showing only the current page number. Tap it to open the input field.
+</Note>
+
+### Surah and Ayah Navigation
+
+Navigate to a specific verse (Ayah) within a Surah.
+
+<Steps>
+  <Step title="Select Surah">
+    In the "الانتقال إلى الآية" (Navigate to Ayah) section, tap the Surah selector dropdown.
+  </Step>
+  <Step title="Choose from List">
+    A modal will appear showing all 114 Surahs with:
+    - Surah number
+    - Surah name in Arabic
+    - Number of Ayahs
+    
+    The current Surah is highlighted with a colored background.
+  </Step>
+  <Step title="Select Ayah">
+    After selecting a Surah, tap the Ayah selector dropdown.
+  </Step>
+  <Step title="Choose Ayah Number">
+    A grid of Ayah numbers (5 columns) will appear. Tap the desired Ayah number.
+  </Step>
+  <Step title="Navigate">
+    The app will navigate to the page containing that Ayah in temporary mode.
+  </Step>
+</Steps>
+
+<Info>
+The Ayah modal uses a 5-column grid layout for easy selection. The list automatically scrolls to show the current Ayah when opened.
+</Info>
+
+## Top Menu Information
+
+The top menu displays contextual navigation information:
+
+- **Current Surah name** (without tashkeel/diacritics)
+- **Juz number** (الجزء)
+- **Position within Juz** (shown as X/16, representing which of 16 portions you're in)
+
+### Accessing the Top Menu
+
+The top menu appears when you tap on the Mushaf page and automatically hides after 5 seconds (configurable via `EXPO_PUBLIC_TOP_MENU_HIDE_DURATION_MS` environment variable).
+
+## Temporary vs. Saved Navigation
+
+Open Mushaf Native distinguishes between two navigation modes:
+
+### Temporary Navigation
+
+When you navigate using the navigation screen, you enter **temporary mode**:
+- URL parameter: `temporary=true`
+- A Reading Position Banner appears at the bottom
+- Your saved reading position remains unchanged
+- Allows browsing without losing your place
+
+### Saved Navigation
+
+When you navigate without temporary mode:
+- The app updates your saved reading position (`currentSavedPage` atom)
+- No Reading Position Banner appears
+- Your progress is automatically saved
+
+<Note>
+See the [Bookmarks guide](/guides/bookmarks) for more information about saving and managing your reading position.
+</Note>
+
+## Navigation Components
+
+The navigation system uses these key components:
+
+### PageNavigator Component
+
+**Location:** `components/PageNavigator.tsx`
+
+Features:
+- Smart pagination showing current page ± range
+- Direct page input with validation
+- Compact mode for small screens
+- Responsive design based on screen width
+
+### SurahAyaNavigator Component
+
+**Location:** `components/SurahAyaNavigator.tsx`
+
+Features:
+- Surah dropdown with full list (114 Surahs)
+- Ayah grid selector (5-column layout)
+- Automatic scrolling to current selection
+- Visual feedback for current selection
+- Loading and error states
+
+## State Management
+
+Navigation state is managed using Jotai atoms:
+
+```typescript
+// Current saved page (persisted to storage)
+currentSavedPage: number
+
+// Top menu visibility state
+topMenuState: boolean
+
+// Bottom menu visibility state  
+bottomMenuState: boolean
+```
+
+These atoms are defined in `jotai/atoms.ts` and automatically persist using MMKV storage.

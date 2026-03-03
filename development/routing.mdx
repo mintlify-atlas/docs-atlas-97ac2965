@@ -1,0 +1,530 @@
+---
+title: 'Routing & Navigation'
+description: 'Expo Router setup, file-based routing structure, and navigation patterns'
+---
+
+## Overview
+
+Open Mushaf Native uses **Expo Router v6** for type-safe, file-based routing. The router automatically generates navigation structure from the `app/` directory, providing a familiar web-like routing experience for React Native.
+
+## Why Expo Router?
+
+<CardGroup cols={2}>
+  <Card title="File-based" icon="folder-tree">
+    Routes are defined by file structure, not configuration
+  </Card>
+  <Card title="Type-safe" icon="shield">
+    Automatic TypeScript types for routes and params
+  </Card>
+  <Card title="Universal" icon="globe">
+    Same routing for iOS, Android, and Web
+  </Card>
+  <Card title="Deep Linking" icon="link">
+    Built-in support for universal links and URL schemes
+  </Card>
+</CardGroup>
+
+## Route Structure
+
+The app uses a nested tab-based navigation with modal screens:
+
+```
+app/
+├── _layout.tsx              # Root layout (Stack navigator)
+├── (tabs)/                  # Tab navigation group
+│   ├── _layout.tsx          # Tab bar configuration
+│   ├── index.tsx            # Tab: المصحف (Mushaf)
+│   ├── lists.tsx            # Tab: الفهرس (Index)
+│   └── (more)/              # Tab: المزيد (More) - nested stack
+│       ├── _layout.tsx      # More section stack
+│       ├── index.tsx        # More menu
+│       ├── settings.tsx     # الإعدادات
+│       ├── privacy.tsx      # الخصوصية
+│       ├── contact.tsx      # تواصل معنا
+│       └── about.tsx        # حول
+├── search.tsx               # Modal: بحث (Search)
+├── navigation.tsx           # Modal: تنقل (Quick Navigation)
+├── tracker.tsx              # Modal: الورد اليومي (Daily Tracker)
+├── tutorial.tsx             # Modal: جولة تعليمية (Tutorial)
+└── +not-found.tsx           # 404 page
+```
+
+<Note>
+Route groups `(tabs)` and `(more)` create navigation structure without adding segments to the URL path.
+</Note>
+
+## Root Layout
+
+The root layout (`app/_layout.tsx`) sets up global providers and the main Stack navigator:
+
+```typescript app/_layout.tsx
+import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { ThemeProvider } from '@react-navigation/native';
+
+export default function RootLayout() {
+  const colorScheme = useColorScheme();
+
+  return (
+    <NotificationProvider>
+      <HelmetProvider>
+        <SEO />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaProvider>
+            <SafeAreaView style={{ flex: 1, maxWidth: 640, alignSelf: 'center' }}>
+              <StatusBar style="auto" />
+              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <Stack
+                  screenOptions={{
+                    headerTitleStyle: {
+                      fontFamily: 'Tajawal_700Bold',
+                    },
+                  }}
+                >
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen name="+not-found" />
+                  <Stack.Screen
+                    name="search"
+                    options={{ title: 'بحث' }}
+                  />
+                  <Stack.Screen
+                    name="navigation"
+                    options={{ title: 'تنقل' }}
+                  />
+                  <Stack.Screen
+                    name="tutorial"
+                    options={{ title: 'جولة تعليمية' }}
+                  />
+                  <Stack.Screen
+                    name="tracker"
+                    options={{ title: 'الورد اليومي' }}
+                  />
+                </Stack>
+              </ThemeProvider>
+            </SafeAreaView>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </HelmetProvider>
+    </NotificationProvider>
+  );
+}
+```
+
+### Key Features
+
+- **RTL Support**: Automatic RTL layout for Arabic
+- **Responsive Container**: Max width of 640px, centered on larger screens
+- **Theme Support**: Dark/light mode via React Navigation themes
+- **Font Configuration**: Arabic fonts (Tajawal) in header titles
+
+## Tab Navigation
+
+The tab layout (`app/(tabs)/_layout.tsx`) creates the bottom navigation bar:
+
+```typescript app/(tabs)/_layout.tsx
+import { Tabs } from 'expo-router';
+import { useAtomValue } from 'jotai/react';
+import { bottomMenuState } from '@/jotai/atoms';
+
+export default function TabLayout() {
+  const colorScheme = useColorScheme();
+  const menuStateValue = useAtomValue<boolean>(bottomMenuState);
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarLabelPosition: 'below-icon',
+        tabBarStyle: {
+          display: menuStateValue ? 'flex' : 'none',
+          justifyContent: 'center',
+          height: 60,
+        },
+        tabBarLabelStyle: {
+          fontFamily: 'Tajawal_400Regular',
+        },
+        headerShown: false,
+      }}
+    >
+      <Tabs.Screen
+        name="lists"
+        options={{
+          title: 'الفهرس',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'view-list' : 'view-list-outline'}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'المصحف',
+          tabBarIcon: ({ color }) => (
+            <FontAwesome6 name="book-quran" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="(more)"
+        options={{
+          title: 'المزيد',
+          tabBarIcon: ({ color }) => (
+            <Feather name="more-horizontal" size={24} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
+  );
+}
+```
+
+<Note>
+The tab bar visibility is controlled by the `bottomMenuState` Jotai atom, allowing dynamic show/hide behavior.
+</Note>
+
+## Nested Stack (More Section)
+
+The "More" tab contains a nested stack navigator:
+
+```typescript app/(tabs)/(more)/_layout.tsx
+import { Stack } from 'expo-router';
+
+export default function MoreLayout() {
+  return (
+    <Stack
+      initialRouteName="index"
+      screenOptions={{
+        headerShown: false,
+        headerTitleStyle: {
+          fontFamily: 'Tajawal_400Regular',
+        },
+      }}
+    >
+      <Stack.Screen
+        name="privacy"
+        options={{ headerShown: true, title: 'الخصوصية' }}
+      />
+      <Stack.Screen
+        name="settings"
+        options={{ headerShown: true, title: 'الاعدادات' }}
+      />
+      <Stack.Screen
+        name="contact"
+        options={{ headerShown: true, title: 'تواصل معنا' }}
+      />
+      <Stack.Screen
+        name="about"
+        options={{ headerShown: true, title: 'حول' }}
+      />
+    </Stack>
+  );
+}
+```
+
+## Navigation Patterns
+
+### Programmatic Navigation
+
+<Tabs>
+  <Tab title="useRouter">
+    ```typescript Navigate to routes
+    import { useRouter } from 'expo-router';
+    
+    export function NavigationExample() {
+      const router = useRouter();
+      
+      return (
+        <Button onPress={() => router.push('/search')}>
+          Open Search
+        </Button>
+      );
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Link Component">
+    ```typescript Declarative navigation
+    import { Link } from 'expo-router';
+    
+    export function LinkExample() {
+      return (
+        <Link href="/settings">
+          Go to Settings
+        </Link>
+      );
+    }
+    ```
+  </Tab>
+  
+  <Tab title="With Params">
+    ```typescript Pass parameters
+    import { useRouter } from 'expo-router';
+    
+    export function ParamsExample() {
+      const router = useRouter();
+      
+      return (
+        <Button 
+          onPress={() => router.push({
+            pathname: '/search',
+            params: { query: 'الفاتحة' }
+          })}
+        >
+          Search Al-Fatiha
+        </Button>
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Navigation Methods
+
+<CodeGroup>
+
+```typescript router.push()
+// Navigate to new screen (adds to history)
+router.push('/tracker');
+```
+
+```typescript router.replace()
+// Replace current screen (doesn't add to history)
+router.replace('/tutorial');
+```
+
+```typescript router.back()
+// Go back to previous screen
+router.back();
+```
+
+```typescript router.dismiss()
+// Dismiss modal or bottom sheet
+router.dismiss();
+```
+
+</CodeGroup>
+
+## Route Parameters
+
+### Accessing Route Parameters
+
+```typescript app/search.tsx
+import { useLocalSearchParams } from 'expo-router';
+
+export default function SearchScreen() {
+  const { query } = useLocalSearchParams<{ query?: string }>();
+  
+  return (
+    <View>
+      <Text>Searching for: {query}</Text>
+    </View>
+  );
+}
+```
+
+### Type-safe Parameters
+
+```typescript Type-safe routing
+import { Href } from 'expo-router';
+
+const searchRoute: Href = {
+  pathname: '/search',
+  params: { query: 'البقرة' }
+};
+
+router.push(searchRoute);
+```
+
+## Deep Linking
+
+Expo Router automatically handles deep links:
+
+```
+# App scheme
+openmushaf://search?query=الفاتحة
+
+# Universal link (web)
+https://openmushaf.com/search?query=الفاتحة
+```
+
+Both resolve to the same `/search` route with query parameters.
+
+## Screen Options
+
+### Per-Screen Configuration
+
+```typescript Custom screen options
+export default function SettingsScreen() {
+  return <View>{/* ... */}</View>;
+}
+
+// Configure screen options
+export const options = {
+  title: 'الإعدادات',
+  headerShown: true,
+  headerStyle: {
+    backgroundColor: '#f4f4f4',
+  },
+  headerTitleStyle: {
+    fontFamily: 'Tajawal_700Bold',
+  },
+};
+```
+
+### Dynamic Options
+
+```typescript Dynamic screen title
+import { Stack } from 'expo-router';
+
+export default function DynamicScreen() {
+  const [title, setTitle] = useState('Default');
+  
+  return (
+    <>
+      <Stack.Screen options={{ title }} />
+      <View>{/* ... */}</View>
+    </>
+  );
+}
+```
+
+## Modal Screens
+
+Modal presentation is configured in the root layout:
+
+```typescript Modal presentation
+<Stack.Screen
+  name="search"
+  options={{
+    presentation: 'modal',
+    title: 'بحث',
+  }}
+/>
+```
+
+## Navigation Guards
+
+Implement conditional navigation with guards:
+
+```typescript Navigation guard example
+import { useRouter, useRootNavigationState } from 'expo-router';
+import { useAtomValue } from 'jotai/react';
+import { finishedTutorial } from '@/jotai/atoms';
+
+export function NavigationGuard() {
+  const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
+  const hasFinishedTutorial = useAtomValue(finishedTutorial);
+  
+  useEffect(() => {
+    if (!rootNavigationState?.key) return;
+    
+    if (!hasFinishedTutorial) {
+      router.replace('/tutorial');
+    }
+  }, [hasFinishedTutorial, rootNavigationState?.key]);
+  
+  return null;
+}
+```
+
+## Web-specific Routing
+
+### SEO & Meta Tags
+
+```typescript app/_layout.tsx
+import { HelmetProvider } from 'react-helmet-async';
+import SEO from '@/components/seo';
+
+export default function RootLayout() {
+  return (
+    <HelmetProvider>
+      <SEO />
+      {/* ... */}
+    </HelmetProvider>
+  );
+}
+```
+
+### Sitemap Generation
+
+Expo Router can generate sitemaps for web builds:
+
+```bash
+# Generate sitemap
+npx expo export:web
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use Route Groups" icon="folder">
+    Organize routes with `(group)` folders without affecting URLs
+  </Card>
+  <Card title="Type Safety" icon="shield-check">
+    Always type route parameters with TypeScript
+  </Card>
+  <Card title="Lazy Loading" icon="clock">
+    Screens are automatically code-split and lazy-loaded
+  </Card>
+  <Card title="Deep Links" icon="link">
+    Design routes to be deep-link friendly from the start
+  </Card>
+</CardGroup>
+
+## Common Patterns
+
+### Tab with State Persistence
+
+```typescript Persist tab state
+import { useAtom } from 'jotai/react';
+import { currentSavedPage } from '@/jotai/atoms';
+
+export default function MushafScreen() {
+  const [page] = useAtom(currentSavedPage);
+  
+  // Page state persists across tab switches
+  return <MushafPage page={page} />;
+}
+```
+
+### Conditional Tab Visibility
+
+```typescript Hide/show tabs dynamically
+const menuVisible = useAtomValue(bottomMenuState);
+
+<Tabs
+  screenOptions={{
+    tabBarStyle: {
+      display: menuVisible ? 'flex' : 'none',
+    },
+  }}
+>
+```
+
+### Navigation with Confirmation
+
+```typescript Confirm before navigation
+const handleNavigate = () => {
+  Alert.alert(
+    'تأكيد',
+    'هل تريد مغادرة هذه الصفحة؟',
+    [
+      { text: 'إلغاء', style: 'cancel' },
+      { text: 'نعم', onPress: () => router.push('/home') },
+    ],
+  );
+};
+```
+
+<Note>
+Expo Router handles Android back button, web browser back/forward, and iOS swipe gestures automatically.
+</Note>

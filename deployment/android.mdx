@@ -1,0 +1,250 @@
+---
+title: Android Deployment
+description: Build and deploy Open Mushaf Native to Android devices and Google Play Store
+---
+
+## Overview
+
+Open Mushaf Native uses Expo Application Services (EAS) for Android builds. You can build locally or in the cloud, and submit to Google Play Store's internal testing or production tracks.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install EAS CLI">
+    ```bash
+    npm install -g eas-cli
+    ```
+  </Step>
+
+  <Step title="Login to Expo">
+    ```bash
+    eas login
+    ```
+  </Step>
+
+  <Step title="Configure Project">
+    Ensure your `app.json` has the correct Android configuration:
+    
+    ```json
+    {
+      "expo": {
+        "android": {
+          "package": "com.adelpro.openmushafnative",
+          "adaptiveIcon": {
+            "foregroundImage": "./assets/images/adaptive-icon.png",
+            "backgroundColor": "#ffffff"
+          },
+          "edgeToEdgeEnabled": true,
+          "jsEngine": "hermes",
+          "playStoreUrl": "https://play.google.com/store/apps/details?id=com.adelpro.openmushafnative"
+        }
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Build Profiles
+
+The project uses two build profiles defined in `eas.json`:
+
+### Preview Profile
+
+Builds an APK for internal testing and distribution:
+
+```json
+"preview": {
+  "android": {
+    "buildType": "apk",
+    "distribution": "internal",
+    "resourceClass": "medium",
+    "image": "latest"
+  },
+  "channel": "preview"
+}
+```
+
+### Production Profile
+
+Builds an AAB (Android App Bundle) for Play Store submission:
+
+```json
+"production": {
+  "android": {
+    "buildType": "app-bundle",
+    "resourceClass": "medium",
+    "image": "latest"
+  },
+  "channel": "production",
+  "autoIncrement": true
+}
+```
+
+## Building for Android
+
+### Cloud Builds
+
+<CodeGroup>
+```bash Preview (APK)
+yarn android:build:preview
+# or
+eas build -p android --profile preview
+```
+
+```bash Production (AAB)
+yarn android:build:production
+# or
+eas build -p android --profile production
+```
+</CodeGroup>
+
+### Local Builds
+
+For faster builds without using EAS cloud resources:
+
+<CodeGroup>
+```bash Preview APK (Local)
+yarn android:build:preview:local
+# Outputs to: builds/app-preview.apk
+```
+
+```bash Production AAB (Local)
+yarn android:build:production:local
+# Outputs to: builds/app-production.aab
+```
+</CodeGroup>
+
+<Warning>
+  Local builds require Android Studio and all necessary build tools installed on your machine.
+</Warning>
+
+## Play Store Submission
+
+### Internal Testing Track
+
+Submit the latest production build to internal testing:
+
+```bash
+yarn android:submit:internal
+# or
+eas submit -p android --profile internal --latest
+```
+
+### Production Track
+
+Submit a specific AAB file to production:
+
+```bash
+yarn android:submit:production
+# or
+eas submit -p android --profile production --path builds/app-production.aab
+```
+
+### Combined Build and Submit
+
+<CodeGroup>
+```bash Internal Testing
+yarn android:build-submit:internal:local
+# Builds production AAB locally, then submits to internal testing
+```
+
+```bash Production
+yarn android:build-submit:production:local
+# Builds production AAB locally, then submits to production
+```
+</CodeGroup>
+
+## Development Builds
+
+For local development and testing:
+
+<CodeGroup>
+```bash Debug Build
+yarn android
+# or
+expo run:android -d
+```
+
+```bash Release Build
+yarn android:prod
+# or
+expo run:android --variant Release -d
+```
+</CodeGroup>
+
+<Note>
+  The `-d` flag automatically selects a connected device or emulator.
+</Note>
+
+## Build Optimizations
+
+The app includes the following optimizations configured in `app.json`:
+
+- **Hermes Engine**: Enabled for better performance
+- **ProGuard**: Enabled in release builds for code shrinking
+- **Resource Shrinking**: Removes unused resources from the final APK/AAB
+- **New Architecture**: React Native's new architecture is enabled
+
+```json
+{
+  "expo": {
+    "newArchEnabled": true,
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
+    ]
+  }
+}
+```
+
+## App Links Configuration
+
+The app supports Android App Links for deep linking:
+
+```json
+"intentFilters": [
+  {
+    "action": "VIEW",
+    "data": {
+      "scheme": "https",
+      "host": "quran.us.kg",
+      "pathPrefix": "/"
+    },
+    "category": ["BROWSABLE", "DEFAULT"],
+    "autoVerify": true
+  }
+]
+```
+
+## Troubleshooting
+
+### Build Failures
+
+1. Clear the build cache:
+   ```bash
+   eas build:clear-cache -p android
+   ```
+
+2. Check your credentials:
+   ```bash
+   eas credentials
+   ```
+
+### Local Build Issues
+
+1. Clean the prebuild folder:
+   ```bash
+   yarn prebuild
+   ```
+
+2. Ensure Android SDK is properly configured:
+   ```bash
+   yarn doctor
+   ```

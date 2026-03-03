@@ -1,0 +1,258 @@
+---
+title: iOS Deployment
+description: Build and deploy Open Mushaf Native to iOS devices and App Store
+---
+
+## Overview
+
+Open Mushaf Native supports iOS deployment through Expo. This guide covers the build process, requirements, and configuration for iOS.
+
+## Prerequisites
+
+<Steps>
+  <Step title="macOS Required">
+    iOS builds require macOS for development. Cloud builds via EAS can be done from any platform.
+  </Step>
+
+  <Step title="Install Xcode">
+    Download and install Xcode from the Mac App Store (required for local builds).
+  </Step>
+
+  <Step title="Install EAS CLI">
+    ```bash
+    npm install -g eas-cli
+    ```
+  </Step>
+
+  <Step title="Login to Expo">
+    ```bash
+    eas login
+    ```
+  </Step>
+</Steps>
+
+## iOS Configuration
+
+The iOS configuration is defined in `app.json`:
+
+```json
+{
+  "expo": {
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.adelpro.openmushafnative",
+      "requireFullScreen": true
+    }
+  }
+}
+```
+
+### Key Settings
+
+- **Bundle Identifier**: `com.adelpro.openmushafnative`
+- **Tablet Support**: Enabled for iPad devices
+- **Full Screen**: Required for immersive Quran reading experience
+
+## Development Builds
+
+For local development and testing on iOS devices or simulators:
+
+<CodeGroup>
+```bash Debug Build
+yarn ios
+# or
+expo run:ios
+```
+
+```bash Release Build
+yarn ios:prod
+# or
+expo run:ios --configuration Release
+```
+</CodeGroup>
+
+<Warning>
+  These commands require macOS with Xcode installed and a configured iOS simulator or connected device.
+</Warning>
+
+## Cloud Builds with EAS
+
+While the current `eas.json` doesn't include iOS-specific profiles, you can build for iOS using EAS:
+
+<CodeGroup>
+```bash Development Build
+eas build -p ios --profile preview
+```
+
+```bash Production Build
+eas build -p ios --profile production
+```
+</CodeGroup>
+
+## App Store Submission
+
+To submit your iOS build to the App Store:
+
+<Steps>
+  <Step title="Build for Production">
+    ```bash
+    eas build -p ios --profile production
+    ```
+  </Step>
+
+  <Step title="Submit to App Store">
+    ```bash
+    eas submit -p ios --latest
+    ```
+  </Step>
+
+  <Step title="Configure in App Store Connect">
+    Complete your app listing in App Store Connect with screenshots, descriptions, and metadata.
+  </Step>
+</Steps>
+
+## Universal Links
+
+The app is configured with a custom URL scheme for deep linking:
+
+```json
+{
+  "expo": {
+    "scheme": "myapp"
+  }
+}
+```
+
+To configure universal links for iOS, you'll need to:
+
+1. Set up an associated domains entitlement
+2. Host an apple-app-site-association file at your domain
+3. Add the domains to your app configuration
+
+## Build Optimizations
+
+The app uses React Native's new architecture for improved performance:
+
+```json
+{
+  "expo": {
+    "newArchEnabled": true,
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
+```
+
+### New Architecture Benefits
+
+- **Improved Performance**: Faster rendering and reduced memory usage
+- **Concurrent Rendering**: Better UI responsiveness
+- **Typed Routes**: Type-safe navigation with Expo Router
+- **React Compiler**: Automatic optimization of React components
+
+<Note>
+  The React Compiler is experimental but provides significant performance improvements.
+</Note>
+
+## Splash Screen Configuration
+
+The app includes custom splash screens optimized for iOS devices:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#f8f8f0",
+          "image": "./assets/images/icon-large.png",
+          "dark": {
+            "image": "./assets/images/icon-large.png",
+            "backgroundColor": "#eeeee6"
+          },
+          "imageWidth": 200
+        }
+      ]
+    ]
+  }
+}
+```
+
+## Fonts and Assets
+
+The app uses custom fonts that are automatically bundled for iOS:
+
+- **Amiri**: Traditional Arabic font for Quranic text
+- **Tajawal**: Modern Arabic font for UI elements
+
+Fonts are loaded using `expo-font` and configured in the plugins section.
+
+## Troubleshooting
+
+### Simulator Issues
+
+If the simulator doesn't launch:
+
+```bash
+# Reset the simulator
+xcrun simctl erase all
+
+# Rebuild the app
+yarn prebuild
+yarn ios
+```
+
+### Certificate Issues
+
+Manage your iOS certificates and provisioning profiles:
+
+```bash
+eas credentials
+```
+
+### Build Failures
+
+Clear the EAS build cache:
+
+```bash
+eas build:clear-cache -p ios
+```
+
+### CocoaPods Issues
+
+If you encounter CocoaPods errors:
+
+```bash
+cd ios
+pod install --repo-update
+cd ..
+```
+
+## Testing on Physical Devices
+
+To test on a physical iOS device:
+
+<Steps>
+  <Step title="Connect Device">
+    Connect your iOS device to your Mac via USB.
+  </Step>
+
+  <Step title="Trust Computer">
+    On your device, tap "Trust" when prompted to trust the computer.
+  </Step>
+
+  <Step title="Run Build">
+    ```bash
+    yarn ios
+    ```
+    
+    Xcode will automatically select your connected device.
+  </Step>
+</Steps>
+
+<Warning>
+  You'll need an Apple Developer account to run builds on physical devices.
+</Warning>

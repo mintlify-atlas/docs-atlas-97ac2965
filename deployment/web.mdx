@@ -1,0 +1,290 @@
+---
+title: Web Deployment
+description: Deploy Open Mushaf Native as a web application using Firebase Hosting
+---
+
+## Overview
+
+Open Mushaf Native can be deployed as a web application using Expo's web support and Firebase Hosting. The app uses Metro bundler with static output for optimal performance.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Firebase CLI">
+    ```bash
+    npm install -g firebase-tools
+    ```
+  </Step>
+
+  <Step title="Login to Firebase">
+    ```bash
+    firebase login
+    ```
+  </Step>
+
+  <Step title="Initialize Firebase">
+    If not already initialized:
+    ```bash
+    firebase init hosting
+    ```
+  </Step>
+</Steps>
+
+## Web Configuration
+
+The web configuration is defined in `app.json`:
+
+```json
+{
+  "expo": {
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    }
+  }
+}
+```
+
+### Firebase Configuration
+
+The Firebase Hosting configuration is defined in `firebase.json`:
+
+```json
+{
+  "hosting": {
+    "site": "open-mushaf-native",
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*"
+    ],
+    "rewrites": [
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}
+```
+
+<Note>
+  The rewrite rule ensures that Expo Router's client-side routing works correctly.
+</Note>
+
+## Build Process
+
+### Standard Web Build
+
+To build the web app without PWA features:
+
+```bash
+yarn web:export
+# or
+expo export -p web
+```
+
+This creates a static build in the `dist` directory.
+
+### PWA Build
+
+To build with Progressive Web App features:
+
+```bash
+yarn web:export:pwa
+# or
+expo export -p web && npx workbox-cli generateSW workbox-config.js
+```
+
+This exports the web app and generates a service worker for offline support.
+
+### Production Build with PWA
+
+The production build process includes optimizations:
+
+```bash
+yarn predeploy
+```
+
+This script:
+- Allocates more memory for large builds (`NODE_OPTIONS=--max-old-space-size=8192`)
+- Disables React Compiler during export (`EXPO_NO_REACT_COMPILER=1`)
+- Clears previous builds (`--clear`)
+- Generates and injects the service worker manifest
+
+```json
+{
+  "scripts": {
+    "predeploy": "cross-env NODE_OPTIONS=--max-old-space-size=8192 EXPO_NO_REACT_COMPILER=1 expo export -p web --clear && npx workbox-cli injectManifest workbox-config.js"
+  }
+}
+```
+
+## Deployment
+
+### Local Testing
+
+Test the Firebase hosting locally before deploying:
+
+```bash
+yarn deploy:local
+# or
+firebase emulators:start --only hosting
+```
+
+This runs the Firebase emulator and serves your build locally.
+
+### Preview Deployment
+
+Deploy to a Firebase preview channel:
+
+```bash
+yarn deploy:preview
+# or
+firebase hosting:channel:deploy preview
+```
+
+Preview channels are perfect for testing before going live.
+
+### Production Deployment
+
+Deploy to your live Firebase hosting site:
+
+```bash
+yarn deploy:live
+# or
+firebase deploy --only hosting
+```
+
+<Warning>
+  Always test your build locally or on a preview channel before deploying to production.
+</Warning>
+
+## Development Server
+
+For active development with hot reloading:
+
+<CodeGroup>
+```bash Standard Server
+yarn web
+# or
+expo start --web
+```
+
+```bash Production Mode
+yarn start:prod
+# or
+expo start --no-dev --minify
+```
+
+```bash Clear Cache
+yarn start:clear
+# or
+expo start --reset-cache
+```
+</CodeGroup>
+
+## Performance Optimizations
+
+### Font Preloading
+
+The app preloads critical fonts in `app/+html.tsx`:
+
+```tsx
+{/* Preload Amiri and Tajawal fonts */}
+<link
+  rel="preload"
+  href="https://fonts.gstatic.com/s/amiri/v24/J7aRnpd8CGxBHpUrtLMA7w.woff2"
+  as="font"
+  type="font/woff2"
+  crossOrigin="anonymous"
+/>
+```
+
+### Asset Bundling
+
+All assets are bundled with the app:
+
+```json
+{
+  "expo": {
+    "assetBundlePatterns": ["**/*"]
+  }
+}
+```
+
+### RTL Support
+
+The app is configured for right-to-left (RTL) languages:
+
+```tsx
+<html lang="ar" dir="rtl">
+```
+
+## Static File Serving
+
+You can also serve the built files using any static file server:
+
+```bash
+yarn web:serve
+# or
+npx serve dist
+```
+
+This is useful for quick testing without Firebase.
+
+## Custom Domain
+
+To use a custom domain with Firebase Hosting:
+
+<Steps>
+  <Step title="Add Domain in Firebase Console">
+    Go to Firebase Console > Hosting > Add custom domain
+  </Step>
+
+  <Step title="Configure DNS">
+    Add the provided DNS records to your domain registrar
+  </Step>
+
+  <Step title="Wait for Verification">
+    Firebase will automatically provision an SSL certificate once DNS is verified
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Build Failures
+
+If the build runs out of memory:
+
+```bash
+# Increase Node memory limit
+cross-env NODE_OPTIONS=--max-old-space-size=8192 expo export -p web
+```
+
+### Routing Issues
+
+Ensure your `firebase.json` includes the rewrite rule:
+
+```json
+{
+  "rewrites": [
+    { "source": "**", "destination": "/index.html" }
+  ]
+}
+```
+
+### Asset Loading Issues
+
+Clear the build cache:
+
+```bash
+expo start --web --clear
+```
+
+### Service Worker Not Updating
+
+Force a clean build:
+
+```bash
+rm -rf dist
+yarn web:export:pwa
+```

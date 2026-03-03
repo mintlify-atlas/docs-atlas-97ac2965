@@ -1,0 +1,252 @@
+---
+title: Contributing Guidelines
+description: Guidelines for contributing to Open Mushaf Native
+---
+
+Thank you for considering contributing to Open Mushaf Native! This guide will help you understand our development workflow and standards.
+
+## Getting Started
+
+### Reporting Issues
+
+Before creating a new issue:
+
+1. Search existing issues to avoid duplicates
+2. Use the issue templates when available
+3. Provide detailed information:
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Screenshots or videos if applicable
+   - Device/platform information
+   - App version
+
+<Note>
+  Open issues on the [GitHub Issues page](https://github.com/adelpro/open-mushaf-native/issues)
+</Note>
+
+## Pull Request Workflow
+
+<Steps>
+  <Step title="Fork and clone">
+    Fork the repository and clone your fork:
+    ```bash
+    git clone https://github.com/your-username/open-mushaf-native.git
+    cd open-mushaf-native
+    ```
+  </Step>
+
+  <Step title="Create a feature branch">
+    Use a descriptive branch name:
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+    
+    Branch naming conventions:
+    - `feature/` - New features
+    - `fix/` - Bug fixes
+    - `docs/` - Documentation updates
+    - `refactor/` - Code refactoring
+    - `test/` - Test additions or updates
+  </Step>
+
+  <Step title="Make your changes">
+    - Follow the code style guidelines (enforced by ESLint)
+    - Write meaningful commit messages
+    - Add tests if applicable
+    - Update documentation as needed
+  </Step>
+
+  <Step title="Test your changes">
+    Ensure all linting passes:
+    ```bash
+    npm run lint
+    ```
+    
+    <Warning>
+      Pull requests must have **zero ESLint errors** to be accepted
+    </Warning>
+  </Step>
+
+  <Step title="Commit your changes">
+    We use conventional commits (enforced by commitlint):
+    ```bash
+    git add .
+    npm run commit
+    ```
+    
+    Or manually:
+    ```bash
+    git commit -m "feat: add new feature"
+    ```
+  </Step>
+
+  <Step title="Push to your fork">
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+  </Step>
+
+  <Step title="Create a pull request">
+    - Go to the original repository
+    - Click "New Pull Request"
+    - Select your fork and branch
+    - Fill out the PR template
+    - Link related issues
+  </Step>
+</Steps>
+
+## Code Style Guidelines
+
+### ESLint Configuration
+
+The project uses ESLint with the following plugins:
+
+- **expo** - Expo-specific rules
+- **prettier** - Code formatting
+- **import** - Import/export sorting
+- **react-compiler** - React Compiler rules
+
+### Import Order
+
+Imports are automatically sorted by the import/order rule:
+
+```typescript
+// 1. React and React Native (external)
+import React from 'react';
+import { View, Text } from 'react-native';
+
+// 2. Other external packages
+import { useAtom } from 'jotai';
+import { useRouter } from 'expo-router';
+
+// 3. Internal packages (@src/**)
+import { theme } from '@src/constants/theme';
+
+// 4. Sibling/parent imports
+import { Button } from '../components/Button';
+import { utils } from './utils';
+```
+
+<Note>
+  Imports are automatically sorted alphabetically and case-insensitively
+</Note>
+
+### Code Formatting
+
+The project uses Prettier for consistent code formatting. Formatting is automatically applied:
+
+- On save (if your editor is configured)
+- Before each commit (via lint-staged)
+- When running `npm run lint:fix`
+
+## Commit Conventions
+
+### Commit Message Format
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Commit Types
+
+| Type | Description | Example |
+|------|-------------|----------|
+| `feat` | New feature or functionality | `feat: add audio playback controls` |
+| `fix` | Bug fix or correction | `fix: resolve page navigation crash` |
+| `docs` | Documentation changes | `docs: update setup instructions` |
+| `style` | Code style changes (formatting) | `style: apply prettier formatting` |
+| `refactor` | Code refactoring | `refactor: simplify state management` |
+| `perf` | Performance improvements | `perf: optimize image loading` |
+| `test` | Adding or updating tests | `test: add unit tests for utils` |
+| `chore` | Routine tasks, dependencies | `chore: update dependencies` |
+| `revert` | Reverting a previous commit | `revert: undo feature X` |
+| `ci` | CI configuration changes | `ci: update GitHub Actions` |
+| `wip` | Work in progress | `wip: implement new feature` |
+
+### Using Commitizen
+
+The project includes Commitizen for interactive commit messages:
+
+```bash
+npm run commit
+```
+
+This will guide you through creating a properly formatted commit message.
+
+### Commit Rules
+
+- **Header max length**: 200 characters
+- **Type**: Must be lowercase (feat, fix, etc.)
+- **Scope**: Optional, any case allowed
+- **Subject**: Any case allowed
+- **Body**: No line length limit for detailed descriptions
+
+<Warning>
+  Commits that don't follow the conventional format will be rejected by the commit-msg hook
+</Warning>
+
+## Git Hooks
+
+The project uses Husky to enforce quality standards:
+
+### pre-commit
+
+Runs automatically before each commit:
+
+1. **Prettier** - Formats code
+2. **ESLint** - Fixes linting issues
+
+Affected files: `**/*.{js,jsx,ts,tsx}`
+
+### commit-msg
+
+Validates commit messages using commitlint to ensure they follow conventional commit format.
+
+## Best Practices
+
+### Code Quality
+
+- Write self-documenting code with clear variable and function names
+- Add comments for complex logic
+- Keep functions small and focused on a single responsibility
+- Avoid deeply nested conditionals
+- Use TypeScript types properly, avoid `any`
+
+### State Management
+
+The project uses **Jotai** for state management:
+
+- Create atoms for shared state
+- Use `jotai-effect` for side effects
+- Keep atoms focused and composable
+
+### Performance
+
+- Use `React.memo` for expensive components
+- Optimize re-renders with proper dependency arrays
+- Use `expo-image` for efficient image handling
+- Test on low-end devices
+
+### Accessibility
+
+- Add proper accessibility labels
+- Test with screen readers
+- Ensure sufficient color contrast
+- Support text scaling
+
+## Questions and Support
+
+If you have questions:
+
+1. Check existing documentation
+2. Search closed issues and discussions
+3. Open a new issue with the "question" label
+4. Reach out through the GitHub repository
+
+Thank you for contributing to Open Mushaf Native!

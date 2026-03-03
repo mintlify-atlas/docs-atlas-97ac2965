@@ -1,0 +1,184 @@
+---
+title: Multiple Riwayas Support
+description: Switch between Hafs and Warsh Riwayas with different Mushaf layouts and page counts
+---
+
+## Overview
+
+Open Mushaf Native supports multiple authentic Quranic recitation traditions (Riwayas), allowing users to read the Quran in their preferred Riwaya with the appropriate Mushaf layout.
+
+## Supported Riwayas
+
+The app currently supports two major Riwayas:
+
+<CardGroup cols={2}>
+  <Card title="Hafs عن عاصم" icon="book">
+    The most widely used Riwaya, standard in most Muslim-majority countries
+  </Card>
+  
+  <Card title="Warsh عن نافع" icon="book-quran">
+    Common in North and West Africa, particularly in Morocco and Algeria
+  </Card>
+</CardGroup>
+
+## Riwaya Types
+
+```typescript types/riwaya.d.ts
+export type Riwaya = 'hafs' | 'warsh' | undefined;
+export type RiwayaArabic = 'حفص' | 'ورش';
+```
+
+## How to Switch Riwayas
+
+<Steps>
+  <Step title="First Launch">
+    On first launch, you'll be prompted to select your preferred Riwaya
+  </Step>
+  
+  <Step title="Choose Riwaya">
+    Select either حفص (Hafs) or ورش (Warsh) from the segmented control
+  </Step>
+  
+  <Step title="Change Later">
+    You can change your Riwaya anytime from Settings using the same segmented control
+  </Step>
+</Steps>
+
+### Selection Component
+
+```tsx components/SelectRiwaya.tsx
+<SegmentedControl
+  options={riwayaOptions} // ['حفص', 'ورش']
+  initialSelectedIndex={RiwayaByIndice(mushafRiwayaValue)}
+  activeColor={primaryColor}
+  textColor={primaryColor}
+  onSelectionChange={(index: number) => {
+    const selectedRiwaya = RiwayaByValue(index);
+    setMushafRiwayaValue(selectedRiwaya);
+  }}
+/>
+```
+
+## Technical Implementation
+
+### State Management
+
+Riwaya selection is stored using Jotai atoms with persistent storage:
+
+```typescript jotai/atoms.ts
+export const mushafRiwaya = createAtomWithStorage<Riwaya | undefined>(
+  'MushafRiwaya',
+  undefined,
+);
+```
+
+<Note>
+The Riwaya preference is saved to device storage and persists across app sessions.
+</Note>
+
+### Image Map Selection
+
+The app maintains separate image collections for each Riwaya:
+
+```typescript hooks/useImagesArray.ts
+let imagesMap;
+switch (mushafRiwayaValue) {
+  case 'hafs':
+    imagesMap = imagesMapHafs;
+    break;
+  case 'warsh':
+    imagesMap = imagesMapWarsh;
+    break;
+  default:
+    imagesMap = undefined;
+}
+```
+
+### Metadata Loading
+
+Each Riwaya has its own Quran metadata (Surah info, Hizb divisions, etc.):
+
+```typescript hooks/useQuranMetadata.ts
+if (mushafRiwayaValue === 'hafs') {
+  // Load Hafs metadata
+  thumnDataJSON = await import('@/assets/metadata/hafs/thumun.json');
+  surahDataJSON = await import('@/assets/metadata/hafs/suwar.json');
+  // ... more Hafs files
+} else {
+  // Load Warsh metadata (default)
+  thumnDataJSON = await import('@/assets/metadata/warsh/thumun.json');
+  surahDataJSON = await import('@/assets/metadata/warsh/suwar.json');
+  // ... more Warsh files
+}
+```
+
+## Differences Between Riwayas
+
+### Layout Variations
+
+<Accordion title="Page Count">
+  The number of pages may differ between Hafs and Warsh Mushafs, as they use different layouts and line breaks.
+</Accordion>
+
+<Accordion title="Text Variations">
+  Some words are recited differently between Riwayas, reflected in the Mushaf text (e.g., مَالِكِ vs مَلِكِ).
+</Accordion>
+
+<Accordion title="Tajweed Colors">
+  Both Mushafs include color-coded Tajweed rules, but the specific marks may vary based on recitation rules.
+</Accordion>
+
+## Automatic Updates
+
+When you switch Riwayas, the app automatically:
+
+<Steps>
+  <Step title="Reloads Metadata">
+    Loads the appropriate Surah, Hizb, and page data for the selected Riwaya
+  </Step>
+  
+  <Step title="Switches Images">
+    Updates the page images to use the correct Mushaf layout
+  </Step>
+  
+  <Step title="Clears Cache">
+    Removes cached pages from the previous Riwaya to free up storage
+  </Step>
+  
+  <Step title="Maintains Position">
+    Attempts to keep you at a similar location in the Quran when switching
+  </Step>
+</Steps>
+
+<Tip>
+Changing Riwayas requires reloading assets, so there may be a brief loading period when switching.
+</Tip>
+
+## Utility Functions
+
+The app provides helper functions for working with Riwayas:
+
+```typescript utils/riwaya.ts
+// Get the index of a Riwaya value (for UI components)
+export function RiwayaByIndice(value: Riwaya): number {
+  return riwayaArray.indexOf(value);
+}
+
+// Get the Riwaya value by index (from UI selection)
+export function RiwayaByValue(index: number): Riwaya {
+  return riwayaArray[index];
+}
+```
+
+## Widget Support
+
+The Android widget also respects your Riwaya selection:
+
+```typescript widgets/widget-task-handler.tsx
+const riwaya = store.get(mushafRiwaya) || 'warsh';
+// Widget loads appropriate images based on Riwaya
+```
+
+<Note>
+If no Riwaya is selected, the app defaults to Warsh for backward compatibility.
+</Note>

@@ -1,0 +1,308 @@
+---
+title: Frequently Asked Questions
+description: Common questions and answers about Open Mushaf Native
+---
+
+Find answers to the most commonly asked questions about Open Mushaf Native.
+
+## General Questions
+
+<AccordionGroup>
+  <Accordion title="What is Open Mushaf Native?">
+    Open Mushaf Native is a modern, cross-platform Quran Mushaf application built with React Native and Expo. It provides an offline-first reading experience with features like gesture navigation, Tafseer popups, and advanced search capabilities.
+
+    The app is available on:
+    - Android (Google Play Store)
+    - iOS
+    - Web (PWA)
+    - macOS
+    - Windows
+  </Accordion>
+
+  <Accordion title="Is Open Mushaf Native free?">
+    Yes, Open Mushaf Native is completely free and open-source under the MIT License. There are no ads, subscriptions, or in-app purchases.
+  </Accordion>
+
+  <Accordion title="Does it work offline?">
+    Yes! Open Mushaf Native is designed for offline use. All Quran pages, Tafseer content, and search functionality work without an internet connection after the initial download.
+  </Accordion>
+
+  <Accordion title="Which Quranic narrations (Riwayat) are supported?">
+    Currently, the app supports:
+    - **Hafs** (رواية حفص عن عاصم)
+    - **Warsh** (رواية ورش عن نافع)
+
+    You can switch between narrations in the Settings screen.
+  </Accordion>
+</AccordionGroup>
+
+## Features
+
+<AccordionGroup>
+  <Accordion title="What Tafseer sources are available?">
+    Open Mushaf Native includes multiple authentic Tafseer sources:
+    - **Ibn Katheer** (تفسير ابن كثير)
+    - **Al-Wasseet** (التفسير الوسيط)
+    - **Al-Tanweer** (التحرير والتنوير)
+    - **Asbab Al-Nuzool** (أسباب النزول للواحدي)
+
+    You can switch between Tafseer sources using the tabs in the Tafseer popup.
+  </Accordion>
+
+  <Accordion title="How does the search feature work?">
+    The app offers multiple search modes:
+
+    **Simple Search**  
+    Direct text matching for finding exact phrases
+
+    **Fuzzy Search**  
+    Flexible matching that finds results even with minor spelling variations
+
+    **Root Search**  
+    Search by Arabic root words to find all derivatives
+
+    **Lemma Search**  
+    Morphological search for finding word forms
+
+    Search results are highlighted for easy identification.
+  </Accordion>
+
+  <Accordion title="What is the Daily Reading Tracker?">
+    The Daily Reading Tracker helps you maintain consistent Quran reading habits:
+    - Set daily reading goals (in pages, Hizb, or Juz)
+    - Track your progress throughout the day
+    - Get notifications when you complete your goal
+    - Progress resets automatically each day
+
+    Enable tracker notifications in Settings to stay motivated.
+  </Accordion>
+
+  <Accordion title="How do I use the Android Widget?">
+    The Android widget displays your current reading position on your home screen:
+
+    1. Long-press on your home screen
+    2. Select "Widgets"
+    3. Find "Open Mushaf Widget"
+    4. Drag it to your home screen
+    5. The widget syncs automatically with your reading progress
+
+    <Note>
+    The widget requires Android and updates every hour to reflect your latest position.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Can I bookmark pages?">
+    Yes! The app automatically saves your last reading position. You can:
+    - Resume reading from where you left off
+    - View your current position in the Reading Position Banner
+    - Navigate directly to bookmarked pages
+
+    The Reading Position Banner can be collapsed by tapping on it.
+  </Accordion>
+</AccordionGroup>
+
+## Navigation & Interface
+
+<AccordionGroup>
+  <Accordion title="How do I navigate between pages?">
+    Open Mushaf Native offers multiple navigation methods:
+
+    **Swipe Gestures**  
+    Swipe right-to-left or left-to-right to flip pages
+
+    **Top Menu**  
+    Tap the screen to show the top menu, which displays:
+    - Current Surah name
+    - Current Juz number and progress
+    - Page number
+
+    **Bottom Navigation**  
+    Access different sections:
+    - Mushaf (reading view)
+    - Lists (Surah/Juz index)
+    - More (settings and info)
+
+    **Direct Navigation**  
+    Use the Lists tab to jump directly to any Surah or Juz
+  </Accordion>
+
+  <Accordion title="Can I read in landscape mode?">
+    Yes! The app supports both portrait and landscape orientations. Landscape mode provides a wider reading experience, especially on tablets.
+  </Accordion>
+
+  <Accordion title="How do I access Tafseer?">
+    To view Tafseer for any verse:
+    1. Tap on the verse you want to read about
+    2. The Tafseer popup will appear from the bottom
+    3. Drag the handle to resize the popup
+    4. Switch between different Tafseer sources using the tabs
+    5. Swipe down to close the popup
+  </Accordion>
+
+  <Accordion title="What are Hizb and Juz notifications?">
+    Enable notifications in Settings to receive alerts when you:
+    - Complete a Hizb (حزب) - 1/60th of the Quran
+    - Complete a Juz (جزء) - 1/30th of the Quran
+
+    This helps you track progress during longer reading sessions.
+  </Accordion>
+</AccordionGroup>
+
+## Settings & Customization
+
+<AccordionGroup>
+  <Accordion title="How do I adjust the display for dark mode?">
+    Open Mushaf Native automatically follows your system dark mode setting. You can also:
+
+    1. Go to Settings
+    2. Adjust the "Dark Mode Brightness" slider (0-100%)
+    3. This controls the contrast of Mushaf pages in dark mode
+
+    The app includes optimized splash screens for both light and dark modes.
+  </Accordion>
+
+  <Accordion title="Can I enable page flip sounds?">
+    Yes! To enable the page flip sound:
+    1. Open Settings
+    2. Toggle "صوت قلب الصفحة" (Page Flip Sound)
+
+    The sound plays each time you navigate to a new page.
+  </Accordion>
+
+  <Accordion title="How do I change the Quranic narration?">
+    To switch between Hafs and Warsh narrations:
+    1. Go to Settings
+    2. Under "إختيار الرواية" (Choose Narration)
+    3. Select your preferred narration
+
+    The Mushaf images will update to reflect the selected narration.
+  </Accordion>
+
+  <Accordion title="How do I reset the app?">
+    If you need to reset all settings and data:
+    1. Go to Settings
+    2. Tap "إعادة ضبط التطبيق" (Reset App)
+    3. Confirm the action
+
+    <Warning>
+    This will delete all saved data including bookmarks, settings, and reading progress. This action cannot be undone.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## Technical Questions
+
+<AccordionGroup>
+  <Accordion title="What platforms are supported?">
+    Open Mushaf Native runs on:
+    - **Android** 5.0+ (API level 21+)
+    - **iOS** 13.0+
+    - **Web** (modern browsers with PWA support)
+    - **macOS** 10.15+
+    - **Windows** (via web or development build)
+
+    The app is built with React Native and Expo for maximum compatibility.
+  </Accordion>
+
+  <Accordion title="What are the system requirements?">
+    **Minimum Requirements:**
+    - 100 MB free storage space
+    - Internet connection for initial download
+    - Modern device (manufactured after 2015 recommended)
+
+    **For Development:**
+    - Node.js v22+
+    - Expo SDK 54+
+    - npm or yarn package manager
+  </Accordion>
+
+  <Accordion title="Does it support PWA (Progressive Web App)?">
+    Yes! The web version is a full PWA, which means:
+    - Install it on your device like a native app
+    - Works offline after installation
+    - Receives updates automatically
+    - Optimized loading and caching
+
+    To install the PWA, visit the web version and look for the "Install" prompt in your browser.
+  </Accordion>
+
+  <Accordion title="What technologies power the app?">
+    Open Mushaf Native is built with modern web and mobile technologies:
+    - **React Native 0.81.5** - Cross-platform framework
+    - **Expo SDK 54** - Development and build tools
+    - **TypeScript** - Type-safe development
+    - **Jotai** - Lightweight state management
+    - **React Native MMKV** - Fast persistent storage
+    - **Expo Image** - Optimized image loading
+    - **Fuse.js** - Fuzzy search
+    - **Quran Search Engine** - Advanced Quranic search
+  </Accordion>
+
+  <Accordion title="Is the source code available?">
+    Yes! Open Mushaf Native is open-source under the MIT License. You can:
+    - View the source code on [GitHub](https://github.com/adelpro/open-mushaf-native)
+    - Contribute to development
+    - Report issues and bugs
+    - Fork and customize for your needs
+
+    See the [Contributing Guide](https://github.com/adelpro/open-mushaf-native/blob/main/CONTRIBUTING.md) for more information.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The app is running slowly. What should I do?">
+    Try these steps:
+    1. Close other apps running in the background
+    2. Restart the app
+    3. Clear app cache (Android: Settings > Apps > Open Mushaf > Storage > Clear Cache)
+    4. Ensure you have at least 200 MB free storage space
+    5. Update to the latest version
+
+    If issues persist, see the [Troubleshooting guide](/resources/troubleshooting) for more solutions.
+  </Accordion>
+
+  <Accordion title="How do I report a bug or request a feature?">
+    We welcome bug reports and feature requests!
+
+    **GitHub Issues** (Recommended)  
+    [Open an issue](https://github.com/adelpro/open-mushaf-native/issues) on GitHub
+
+    **Contact Form**  
+    Use the in-app contact form (More > Contact Us)
+
+    Please include:
+    - Device model and OS version
+    - App version
+    - Steps to reproduce the issue
+    - Screenshots if applicable
+  </Accordion>
+</AccordionGroup>
+
+## Privacy & Data
+
+<AccordionGroup>
+  <Accordion title="What data does the app collect?">
+    Open Mushaf Native respects your privacy:
+    - All reading data is stored locally on your device
+    - No user data is sent to external servers
+    - No analytics or tracking
+    - No ads or third-party services
+
+    See the full [Privacy Policy](https://github.com/adelpro/open-mushaf-native/blob/main/PRIVACY.md) for details.
+  </Accordion>
+
+  <Accordion title="Can I use the app without an internet connection?">
+    Yes! After the initial download:
+    - All Quran pages are cached
+    - All Tafseer content is available offline
+    - Search works offline
+    - Settings and bookmarks are stored locally
+
+    You only need internet for:
+    - Initial app installation
+    - App updates
+    - Sharing content
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,409 @@
+---
+title: MushafPage Component
+description: Core component for displaying Mushaf pages with gesture handling and navigation
+---
+
+## Overview
+
+The `MushafPage` component is the main component responsible for displaying Quran Mushaf pages. It handles image display, gesture-based navigation, page transitions, notifications, and progress tracking.
+
+## Key Features
+
+- **Image Display**: Renders high-resolution Mushaf page images with adaptive layout
+- **Gesture Navigation**: Supports pan gestures for natural page turning
+- **Progress Tracking**: Monitors daily reading progress and Hizb/Juz completion
+- **Notifications**: Shows Hizb and goal completion notifications
+- **Orientation Support**: Adapts to portrait and landscape orientations
+- **Keep Awake**: Prevents screen from sleeping during reading
+- **Theme Support**: Dynamic dark mode with adjustable contrast
+
+## Component Architecture
+
+### Dependencies
+
+<CodeGroup>
+```typescript Key Hooks
+import useCurrentPage from '@/hooks/useCurrentPage';
+import useImagePreloader from '@/hooks/useImagePreloader';
+import useImagesArray from '@/hooks/useImagesArray';
+import useOrientation from '@/hooks/useOrientation';
+import { usePanGestureHandler } from '@/hooks/usePanGestureHandler';
+import useQuranMetadata from '@/hooks/useQuranMetadata';
+```
+
+```typescript State Management
+import {
+  dailyTrackerCompleted,
+  dailyTrackerGoal,
+  flipSound,
+  hizbNotification,
+  mushafContrast,
+  showTrackerNotification,
+  yesterdayPage,
+} from '@/jotai/atoms';
+```
+</CodeGroup>
+
+### State Management
+
+The component uses Jotai atoms for global state and local state for UI interactions:
+
+<ParamField path="mushafContrastValue" type="number">
+  Controls the opacity of Mushaf images in dark mode (0-1 range)
+</ParamField>
+
+<ParamField path="currentPage" type="number">
+  The currently displayed page number (1-604)
+</ParamField>
+
+<ParamField path="showHizbNotification" type="boolean">
+  Controls visibility of Hizb completion notification
+</ParamField>
+
+<ParamField path="showGoalNotification" type="boolean">
+  Controls visibility of daily goal completion notification
+</ParamField>
+
+<ParamField path="progressValue" type="number">
+  Daily reading progress as a decimal (0-1)
+</ParamField>
+
+## Image Rendering
+
+### Portrait Mode
+
+```typescript MushafPage.tsx (lines 369-379)
+<Image
+  style={[
+    styles.image,
+    { width: '100%' },
+    colorScheme === 'dark' && {
+      opacity: mushafContrastValue,
+    },
+  ]}
+  source={{ uri: asset?.localUri }}
+  contentFit="fill"
+/>
+```
+
+### Landscape Mode
+
+In landscape orientation, the page is wrapped in a `ScrollView` for vertical scrolling:
+
+```typescript MushafPage.tsx (lines 350-367)
+<ScrollView style={styles.scrollContainer}>
+  <Image
+    style={[
+      styles.image,
+      {
+        width: '100%',
+        height: undefined,
+        aspectRatio: 0.7,
+      },
+      colorScheme === 'dark' && {
+        opacity: mushafContrastValue,
+      },
+    ]}
+    source={{ uri: asset?.localUri }}
+    contentFit="fill"
+  />
+</ScrollView>
+```
+
+## Gesture Handling
+
+### Pan Gesture Implementation
+
+The component uses React Native Reanimated for smooth gesture-based page navigation:
+
+```typescript MushafPage.tsx (lines 179-184)
+const { translateX, panGestureHandler } = usePanGestureHandler(
+  currentPage,
+  handlePageChange,
+  defaultNumberOfPages,
+);
+```
+
+### Animated Styles
+
+The gesture creates visual feedback with shadow and opacity changes:
+
+```typescript MushafPage.tsx (lines 185-205)
+const animatedStyle = useAnimatedStyle(() => {
+  const maxTranslateX = 20;
+  const clampedTranslateX = Math.max(
+    -maxTranslateX,
+    Math.min(translateX.value, maxTranslateX),
+  );
+  const shadowOpacity = Math.min(
+    0.5,
+    Math.abs(clampedTranslateX) / maxTranslateX,
+  );
+  const opacity = Math.max(
+    0.85,
+    1 - Math.abs(clampedTranslateX) / maxTranslateX,
+  );
+
+  return {
+    transform: [{ translateX: clampedTranslateX }],
+    shadowOpacity,
+    opacity,
+  };
+});
+```
+
+<Note>
+  The gesture is clamped to ±20 pixels to prevent excessive page movement while still providing visual feedback.
+</Note>
+
+## Page Navigation
+
+### Page Change Handler
+
+```typescript MushafPage.tsx (lines 163-177)
+const handlePageChange = (page: number) => {
+  if (page === currentPage) return;
+  setCurrentPage(page);
+  router.replace({
+    pathname: '/',
+    params: {
+      page: page.toString(),
+      ...(temporary ? { temporary: temporary.toString() } : {}),
+    },
+  });
+
+  if (isFlipSoundEnabled) {
+    player.play();
+  }
+};
+```
+
+<ParamField path="page" type="number" required>
+  The target page number to navigate to
+</ParamField>
+
+### Features:
+- Prevents duplicate navigation to the same page
+- Updates URL parameters using Expo Router
+- Plays optional flip sound effect
+- Preserves temporary page state
+
+## Progress Tracking
+
+### Daily Progress Calculation
+
+```typescript MushafPage.tsx (lines 263-283)
+useEffect(() => {
+  if (typeof currentPage === 'number') {
+    // Calculate thumns read between yesterday's page and current page
+    const numberOfThumn = calculateThumnsBetweenPages(
+      yesterdayPageValue.value,
+      currentPage,
+      thumnData,
+    );
+
+    // Update the progress state with new object format
+    setdailyTrackerCompletedValue({
+      value: numberOfThumn / 8,
+      date: new Date().toDateString(),
+    });
+  }
+}, [
+  currentPage,
+  yesterdayPageValue,
+  thumnData,
+  setdailyTrackerCompletedValue,
+]);
+```
+
+<Note>
+  Progress is tracked in units of "Thumn" (1/8th of a Juz). There are 8 Thumns per Juz and 30 Juz in the Quran.
+</Note>
+
+## Notifications
+
+### Hizb Notification Logic
+
+```typescript MushafPage.tsx (lines 111-125)
+useEffect(() => {
+  const hizb = hizbData.find((hizb) => hizb.startingPage === currentPage);
+  const currentHizbNumber = hizb && hizb.number !== 1 ? hizb.number : null;
+
+  const shouldShowHizbNotification = (() => {
+    if (!currentHizbNumber || hizbNotificationValue === 0) return false;
+    if (hizbNotificationValue === 1) return true;
+    if (hizbNotificationValue === 2) return currentHizbNumber % 2 !== 0;
+    return false;
+  })();
+
+  if (shouldShowHizbNotification) {
+    setShowHizbNotification(true);
+  }
+}, [currentPage, hizbData, hizbNotificationValue]);
+```
+
+### Notification Display
+
+```typescript MushafPage.tsx (lines 229-250)
+useEffect(() => {
+  // Hizb notification logic
+  const hizb = hizbData.find((hizb) => hizb.startingPage === currentPage);
+  const currentHizbNumber = hizb && hizb.number !== 1 ? hizb.number : null;
+
+  // Show Hizb notification if needed
+  if (showHizbNotification && currentHizbNumber !== null) {
+    notify(
+      hizbNotificationValue === 2
+        ? `الجزء - ${(currentHizbNumber - 1)?.toString()}`
+        : `الحزب - ${currentHizbNumber?.toString()}`,
+      'hizb_notification',
+      'neutral',
+    );
+  }
+}, [
+  currentPage,
+  hizbData,
+  hizbNotificationValue,
+  notify,
+  showHizbNotification,
+]);
+```
+
+<Tabs>
+  <Tab title="Notification Types">
+    - **Hizb Notifications**: Shown when completing a Hizb (1/60th of Quran)
+    - **Juz Notifications**: Shown when completing a Juz (1/30th of Quran)
+    - **Goal Notifications**: Shown when daily reading goal is achieved
+  </Tab>
+  <Tab title="Settings">
+    - `hizbNotificationValue === 0`: Disabled
+    - `hizbNotificationValue === 1`: Show all Hizbs
+    - `hizbNotificationValue === 2`: Show only odd Hizbs (Juz markers)
+  </Tab>
+</Tabs>
+
+## Keep Awake Feature
+
+```typescript MushafPage.tsx (lines 207-227)
+useEffect(() => {
+  const tag = 'MushafPage';
+  const enableKeepAwake = async () => {
+    const isAvailable = await isAvailableAsync();
+    if (Platform.OS === 'web' || !isAvailable) return;
+    await activateKeepAwakeAsync(tag);
+  };
+
+  enableKeepAwake();
+
+  // Cleanup on unmount
+  return () => {
+    const disableKeepAwake = async () => {
+      const isAvailable = await isAvailableAsync();
+      if (Platform.OS !== 'web' && isAvailable) {
+        deactivateKeepAwake(tag);
+      }
+    };
+    disableKeepAwake();
+  };
+}, []);
+```
+
+This prevents the screen from sleeping while reading, improving the user experience.
+
+## Image Preloading
+
+```typescript MushafPage.tsx (line 156)
+// Preload adjacent pages for smoother navigation
+useImagePreloader(currentPage);
+```
+
+The `useImagePreloader` hook preloads adjacent pages (previous and next) to ensure smooth transitions.
+
+## SEO Metadata
+
+```typescript MushafPage.tsx (lines 91, 329-333)
+const seoMetadata = getSEOMetadataByPage(surahData, thumnData, currentPage);
+
+// Later in the component:
+<SEO
+  title={seoMetadata.title}
+  description={seoMetadata.description}
+  keywords={seoMetadata.keywords}
+/>
+```
+
+Dynamic SEO metadata is generated based on the current page's Surah and position.
+
+## Error Handling
+
+### Metadata Error
+
+```typescript MushafPage.tsx (lines 286-294)
+if (metadataError) {
+  return (
+    <ThemedView
+      style={[styles.errorContainer, { backgroundColor: ivoryColor }]}
+    >
+      <ThemedText type="defaultSemiBold">{`حدث خطأ: ${metadataError}`}</ThemedText>
+    </ThemedView>
+  );
+}
+```
+
+### Asset Loading Error
+
+```typescript MushafPage.tsx (lines 307-315)
+if (assetError) {
+  return (
+    <ThemedView
+      style={[styles.errorContainer, { backgroundColor: ivoryColor }]}
+    >
+      <ThemedText type="defaultSemiBold">{`حدث خطأ: ${assetError}`}</ThemedText>
+    </ThemedView>
+  );
+}
+```
+
+## Styling
+
+```typescript MushafPage.tsx (lines 392-420)
+const styles = StyleSheet.create({
+  imageContainer: {
+    width: '100%',
+    height: '100%',
+    maxWidth: 640,
+    overflow: 'hidden',
+  },
+  scrollContainer: {
+    width: '100%',
+    height: '100%',
+    maxWidth: 640,
+  },
+  image: {
+    flex: 1,
+  },
+  errorContainer: {
+    width: '100%',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingContainer: {
+    width: '100%',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
+```
+
+<Note>
+  The component enforces a maximum width of 640px for consistent layout across different screen sizes.
+</Note>
+
+## Related Components
+
+- **PageOverlay**: Displays interactive elements over the Mushaf page
+- **TopMenu**: Navigation and settings menu
+- **NotificationProvider**: Handles notification display

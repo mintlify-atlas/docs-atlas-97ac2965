@@ -1,0 +1,342 @@
+---
+title: Testing & Quality
+description: Testing, linting, and code quality guidelines for Open Mushaf Native
+---
+
+Ensure code quality and consistency by following these testing and linting practices.
+
+## Linting
+
+### Running ESLint
+
+Check for linting errors:
+
+```bash
+npm run lint
+```
+
+Automatically fix linting issues:
+
+```bash
+npm run lint:fix
+```
+
+<Warning>
+  All pull requests must have **zero ESLint errors** before they can be merged
+</Warning>
+
+### ESLint Configuration
+
+The project uses a comprehensive ESLint setup defined in `.eslintrc.js`:
+
+#### Extends
+
+- **expo** - Expo-specific linting rules
+- **prettier** - Ensures code formatting consistency
+
+#### Plugins
+
+- **prettier** - Enforces Prettier formatting rules
+- **import** - Manages import/export statements
+- **react-compiler** - Validates React Compiler compatibility
+
+#### Key Rules
+
+<AccordionGroup>
+  <Accordion title="prettier/prettier">
+    **Severity**: Error
+    
+    Enforces Prettier code formatting. Any formatting violations will cause the linter to fail.
+    
+    ```bash
+    # Auto-fix formatting issues
+    npm run lint:fix
+    ```
+  </Accordion>
+
+  <Accordion title="react-compiler/react-compiler">
+    **Severity**: Error
+    
+    Validates that code is compatible with the React Compiler. This ensures optimal performance and prevents runtime issues.
+  </Accordion>
+
+  <Accordion title="sort-imports">
+    **Severity**: Error
+    
+    Enforces sorted imports within each import statement:
+    
+    ```typescript
+    // Correct
+    import { Button, Text, View } from 'react-native';
+    
+    // Incorrect
+    import { View, Button, Text } from 'react-native';
+    ```
+    
+    Options:
+    - `ignoreCase: true` - Case-insensitive sorting
+    - `ignoreDeclarationSort: true` - Doesn't sort import declarations
+  </Accordion>
+
+  <Accordion title="import/order">
+    **Severity**: Error
+    
+    Enforces a specific order for import statements:
+    
+    1. **External/Builtin** - React, React Native, and third-party packages
+    2. **Internal** - `@src/**` imports
+    3. **Sibling/Parent** - Relative imports from parent or sibling directories
+    4. **Index** - Index file imports
+    
+    Special path groups:
+    - React and React Native always come first
+    - `@src/**` imports are grouped as internal
+    
+    Options:
+    - Newlines between groups are required
+    - Alphabetically sorted (case-insensitive)
+  </Accordion>
+</AccordionGroup>
+
+### Prettier Configuration
+
+Code formatting is handled by Prettier. Configuration is defined in the project root.
+
+Common formatting rules:
+- Single quotes for strings
+- 2-space indentation
+- Trailing commas
+- Semicolons required
+
+## Pre-commit Hooks
+
+The project uses **Husky** and **lint-staged** to enforce code quality before commits.
+
+### Automated Checks
+
+When you run `git commit`, the following happens automatically:
+
+<Steps>
+  <Step title="Pre-commit hook runs">
+    Located in `.husky/pre-commit`, this hook runs lint-staged on all staged files.
+  </Step>
+
+  <Step title="Prettier formats code">
+    All staged `**/*.{js,jsx,ts,tsx}` files are formatted:
+    ```bash
+    npx prettier --write
+    ```
+  </Step>
+
+  <Step title="ESLint fixes issues">
+    ESLint attempts to auto-fix linting errors:
+    ```bash
+    npx eslint --fix
+    ```
+  </Step>
+
+  <Step title="Commit-msg validation">
+    Located in `.husky/commit-msg`, this hook validates your commit message format using commitlint.
+  </Step>
+</Steps>
+
+<Note>
+  If any hook fails, the commit will be aborted. Fix the issues and try again.
+</Note>
+
+### Bypassing Hooks
+
+<Warning>
+  Only bypass hooks if absolutely necessary (e.g., emergency hotfixes). This is strongly discouraged.
+</Warning>
+
+```bash
+git commit --no-verify -m "emergency fix"
+```
+
+## Testing
+
+### Test Framework
+
+The project uses **Jest** with **jest-expo** preset for testing.
+
+### Running Tests
+
+Run tests in watch mode:
+
+```bash
+npm test
+```
+
+This starts Jest in watch mode, re-running tests when files change.
+
+### Test Structure
+
+Tests should be co-located with the code they test:
+
+```
+src/
+  components/
+    Button/
+      Button.tsx
+      Button.test.tsx
+  utils/
+    formatDate.ts
+    formatDate.test.ts
+```
+
+### Writing Tests
+
+Example test structure:
+
+```typescript
+import { render, fireEvent } from '@testing-library/react-native';
+
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('renders correctly', () => {
+    const { getByText } = render(<Button title="Click me" />);
+    expect(getByText('Click me')).toBeTruthy();
+  });
+
+  it('calls onPress when clicked', () => {
+    const onPressMock = jest.fn();
+    const { getByText } = render(
+      <Button title="Click me" onPress={onPressMock} />
+    );
+    
+    fireEvent.press(getByText('Click me'));
+    expect(onPressMock).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+## Code Quality Tools
+
+### Expo Doctor
+
+Diagnose issues with your Expo project:
+
+```bash
+npm run doctor
+```
+
+This checks for:
+- Dependency version compatibility
+- Configuration issues
+- Common setup problems
+
+### React Compiler Health Check
+
+Verify React Compiler compatibility:
+
+```bash
+npm run react-compiler-check
+```
+
+This analyzes your codebase for patterns that may not work well with the React Compiler.
+
+### Bundle Analysis
+
+Analyze bundle size and composition:
+
+```bash
+npm run start:atlas
+```
+
+Expo Atlas provides insights into:
+- Bundle size by module
+- Dependency tree
+- Performance bottlenecks
+
+### React Scan
+
+Monitor component re-renders during development:
+
+```bash
+npm run scan
+```
+
+This helps identify:
+- Unnecessary re-renders
+- Performance issues
+- Optimization opportunities
+
+## Continuous Integration
+
+The project uses GitHub Actions for CI/CD:
+
+### CodeQL Analysis
+
+Automated security scanning runs on:
+- Push to main branch
+- Pull requests
+- Weekly schedule
+
+### Quality Checks
+
+The project is monitored by:
+- **Codacy** - Code quality analysis
+- **CodeQL** - Security vulnerability scanning
+
+## Best Practices
+
+### Before Committing
+
+<Checklist>
+  - [ ] Run `npm run lint` and fix all errors
+  - [ ] Run `npm test` to ensure tests pass
+  - [ ] Test your changes on multiple platforms (if applicable)
+  - [ ] Update documentation for new features
+  - [ ] Write meaningful commit messages
+  - [ ] Keep commits focused and atomic
+</Checklist>
+
+### Before Submitting PR
+
+<Checklist>
+  - [ ] All linting passes with zero errors
+  - [ ] All tests pass
+  - [ ] No new console warnings or errors
+  - [ ] Code follows style guidelines
+  - [ ] Commit messages follow conventional format
+  - [ ] PR description is clear and complete
+  - [ ] Related issues are linked
+</Checklist>
+
+## Troubleshooting
+
+### ESLint Errors Won't Fix
+
+If `npm run lint:fix` doesn't resolve all issues:
+
+1. Check the specific error message
+2. Some rules can't be auto-fixed and require manual changes
+3. Ensure you're not violating React Compiler rules
+
+### Commit Hook Failures
+
+If pre-commit hooks fail:
+
+1. Read the error message carefully
+2. Run `npm run lint:fix` manually
+3. Stage the auto-fixed files: `git add .`
+4. Try committing again
+
+### Test Failures
+
+If tests fail:
+
+1. Run tests in watch mode: `npm test`
+2. Check for async issues or missing mocks
+3. Ensure test environment is set up correctly
+4. Clear Jest cache if needed: `npx jest --clearCache`
+
+## Additional Resources
+
+- [ESLint Documentation](https://eslint.org/docs/latest/)
+- [Prettier Documentation](https://prettier.io/docs/en/)
+- [Jest Documentation](https://jestjs.io/docs/getting-started)
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [Husky Documentation](https://typicode.github.io/husky/)

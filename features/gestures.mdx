@@ -1,0 +1,372 @@
+---
+title: Gesture Navigation
+description: Swipe and touch controls for intuitive Mushaf page navigation
+---
+
+## Overview
+
+Open Mushaf Native uses intuitive gesture-based navigation to provide a natural, book-like reading experience. Navigate between pages with simple swipes, just like turning pages in a physical Mushaf.
+
+## Supported Gestures
+
+<CardGroup cols={2}>
+  <Card title="Swipe Right" icon="hand-point-right">
+    Move to the next page (forward in the Quran)
+  </Card>
+  
+  <Card title="Swipe Left" icon="hand-point-left">
+    Move to the previous page (backward in the Quran)
+  </Card>
+  
+  <Card title="Tap Verse" icon="hand-pointer">
+    Open Tafseer popup for the selected verse
+  </Card>
+  
+  <Card title="Tap Menu Area" icon="bars">
+    Toggle top menu visibility for navigation options
+  </Card>
+</CardGroup>
+
+## Pan Gesture Implementation
+
+### Gesture Handler Hook
+
+The core gesture system is implemented in `usePanGestureHandler`:
+
+```typescript hooks/usePanGestureHandler.ts
+import { Gesture } from 'react-native-gesture-handler';
+import { runOnJS, useSharedValue, withSpring } from 'react-native-reanimated';
+
+export const usePanGestureHandler = (
+  currentPage: number,
+  onPageChange: (page: number) => void,
+  maxPages: number,
+) => {
+  const translateX = useSharedValue(0);
+  const { isLandscape } = useOrientation();
+
+  const panGestureHandler = Gesture.Pan()
+    .onUpdate((e) => {
+      // Update visual feedback as user swipes
+      translateX.value = Math.max(-100, Math.min(100, e.translationX));
+    })
+    .onEnd((e) => {
+      // Determine swipe threshold based on orientation
+      const threshold = isLandscape ? 150 : 100;
+      
+      const targetPage =
+        e.translationX > threshold
+          ? Math.min(currentPage + 1, maxPages) // Swipe Right
+          : e.translationX < -threshold
+            ? Math.max(currentPage - 1, 1) // Swipe Left
+            : currentPage; // No page change
+
+      if (targetPage !== currentPage) {
+        runOnJS(onPageChange)(targetPage);
+      }
+
+      // Smooth return animation
+      translateX.value = withSpring(0, { damping: 20, stiffness: 90 });
+    });
+
+  return { translateX, panGestureHandler };
+};
+```
+
+<Note>
+The swipe threshold adapts based on screen orientation - landscape mode requires a longer swipe (150px) than portrait mode (100px) to prevent accidental page changes.
+</Note>
+
+## Visual Feedback
+
+### Animated Page Translation
+
+As you swipe, the page provides visual feedback:
+
+```typescript components/MushafPage.tsx
+const animatedStyle = useAnimatedStyle(() => {
+  const maxTranslateX = 20;
+  const clampedTranslateX = Math.max(
+    -maxTranslateX,
+    Math.min(translateX.value, maxTranslateX),
+  );
+  
+  const shadowOpacity = Math.min(
+    0.5,
+    Math.abs(clampedTranslateX) / maxTranslateX,
+  );
+  
+  const opacity = Math.max(
+    0.85,
+    1 - Math.abs(clampedTranslateX) / maxTranslateX,
+  );
+
+  return {
+    transform: [{ translateX: clampedTranslateX }],
+    shadowOpacity,
+    opacity,
+  };
+});
+```
+
+### Animation Effects
+
+<Steps>
+  <Step title="Clamped Translation">
+    Page movement is clamped to ±20px to prevent excessive sliding
+  </Step>
+  
+  <Step title="Dynamic Shadow">
+    Shadow opacity increases as you swipe, creating depth perception
+  </Step>
+  
+  <Step title="Opacity Fade">
+    Page opacity decreases slightly (min 0.85) during swipe for visual feedback
+  </Step>
+  
+  <Step title="Spring Animation">
+    Smooth spring-based return animation when releasing the swipe
+  </Step>
+</Steps>
+
+<Tip>
+The subtle opacity and shadow changes provide tactile feedback that mimics the feel of turning physical pages.
+</Tip>
+
+## Gesture Detector Integration
+
+### MushafPage Component
+
+```tsx components/MushafPage.tsx
+const { translateX, panGestureHandler } = usePanGestureHandler(
+  currentPage,
+  handlePageChange,
+  defaultNumberOfPages,
+);
+
+return (
+  <GestureDetector gesture={panGestureHandler}>
+    <Animated.View
+      style={[
+        styles.imageContainer,
+        animatedStyle,
+        { backgroundColor: ivoryColor },
+      ]}
+    >
+      <Image
+        source={{ uri: asset?.localUri }}
+        contentFit="fill"
+      />
+      <PageOverlay index={currentPage} dimensions={dimensions} />
+    </Animated.View>
+  </GestureDetector>
+);
+```
+
+## Page Change Handler
+
+### Navigation Logic
+
+```typescript components/MushafPage.tsx
+const handlePageChange = (page: number) => {
+  if (page === currentPage) return;
+  
+  setCurrentPage(page);
+  
+  router.replace({
+    pathname: '/',
+    params: {
+      page: page.toString(),
+      ...(temporary ? { temporary: temporary.toString() } : {}),
+    },
+  });
+
+  // Play flip sound if enabled
+  if (isFlipSoundEnabled) {
+    player.play();
+  }
+};
+```
+
+<Accordion title="What happens when you swipe?">
+  1. Gesture handler detects swipe direction and distance
+  2. Calculates target page based on threshold
+  3. Calls `handlePageChange` with new page number
+  4. Updates current page state
+  5. Updates URL parameters for deep linking
+  6. Plays page flip sound (if enabled)
+  7. Triggers progress tracking update
+  8. Preloads adjacent pages for smooth navigation
+</Accordion>
+
+## Sound Effects
+
+### Optional Flip Sound
+
+Page navigation can include an audio cue:
+
+```typescript components/MushafPage.tsx
+import { useAudioPlayer } from 'expo-audio';
+
+const audioSource = require('@/assets/sounds/page-flip-sound.mp3');
+const player = useAudioPlayer(audioSource);
+const isFlipSoundEnabled = useAtomValue(flipSound);
+
+if (isFlipSoundEnabled) {
+  player.play();
+}
+```
+
+Sound preference is persisted:
+
+```typescript jotai/atoms.ts
+export const flipSound = createAtomWithStorage<boolean>('FlipSound', false);
+```
+
+<Note>
+Flip sound is disabled by default but can be enabled in Settings for audible feedback when changing pages.
+</Note>
+
+## Orientation Handling
+
+### Landscape vs Portrait
+
+The gesture system adapts to screen orientation:
+
+```typescript hooks/useOrientation.ts
+const { isLandscape } = useOrientation();
+
+// Different threshold for landscape mode
+const threshold = isLandscape ? 150 : 100;
+```
+
+### Landscape Scrolling
+
+In landscape mode, the page becomes scrollable:
+
+```tsx components/MushafPage.tsx
+{isLandscape ? (
+  <ScrollView style={styles.scrollContainer}>
+    <Image
+      style={{
+        width: '100%',
+        height: undefined,
+        aspectRatio: 0.7,
+      }}
+      source={{ uri: asset?.localUri }}
+      contentFit="fill"
+    />
+  </ScrollView>
+) : (
+  <Image
+    style={{ width: '100%' }}
+    source={{ uri: asset?.localUri }}
+    contentFit="fill"
+  />
+)}
+```
+
+<Tip>
+Landscape mode provides vertical scrolling for easier reading on wider screens, while portrait mode shows the full page at once.
+</Tip>
+
+## Touch Interactions
+
+### Page Overlay
+
+Verse selection is handled by the PageOverlay component:
+
+```tsx components/MushafPage.tsx
+<PageOverlay index={currentPage} dimensions={dimensions} />
+```
+
+The overlay:
+- Detects taps on specific verse positions
+- Opens Tafseer popup for tapped verses
+- Provides visual feedback on touch
+- Maps touch coordinates to verse boundaries
+
+### Menu Toggle
+
+Tapping specific areas toggles the top menu:
+
+```typescript jotai/atoms.ts
+export const topMenuState = createAtomWithStorage<boolean>(
+  'TopMenuState',
+  false,
+);
+
+// Top menu auto-hide effect
+observe((get, set) => {
+  const duration = parseInt(
+    process.env.EXPO_PUBLIC_TOP_MENU_HIDE_DURATION_MS || '5000',
+    10,
+  );
+  if (get(topMenuState)) {
+    const timerId = setTimeout(() => {
+      set(topMenuState, false);
+    }, duration);
+
+    return () => clearTimeout(timerId);
+  }
+});
+```
+
+<Note>
+The top menu automatically hides after 5 seconds (configurable via environment variable) to provide distraction-free reading.
+</Note>
+
+## Performance Optimizations
+
+<CardGroup cols={2}>
+  <Card title="Shared Values" icon="gauge-high">
+    Uses Reanimated's useSharedValue for 60fps animations on UI thread
+  </Card>
+  
+  <Card title="Clamped Translation" icon="sliders">
+    Limits translation range to prevent excessive calculations
+  </Card>
+  
+  <Card title="Spring Physics" icon="wave-square">
+    Natural spring animation with optimized damping and stiffness
+  </Card>
+  
+  <Card title="Conditional Updates" icon="filter">
+    Only triggers page change when target page differs from current
+  </Card>
+</CardGroup>
+
+## Accessibility
+
+### Gesture Alternatives
+
+While gestures are the primary navigation method, the app also provides:
+
+- Top navigation bar with page number input
+- Surah/Juz/Hizb navigation selectors
+- Keyboard navigation (on web platform)
+- Direct page number entry
+
+<Accordion title="Why provide multiple navigation methods?">
+  Different users have different preferences and accessibility needs. Some may find gestures difficult, while others may want to jump directly to specific pages or Surahs. Providing multiple methods ensures everyone can navigate comfortably.
+</Accordion>
+
+## Best Practices
+
+<Steps>
+  <Step title="Natural Swipes">
+    Use natural, comfortable swipe motions - no need to be fast or aggressive
+  </Step>
+  
+  <Step title="Wait for Animation">
+    Let the spring animation complete before swiping again for smoother experience
+  </Step>
+  
+  <Step title="Adjust Threshold">
+    The threshold prevents accidental swipes during scrolling (landscape) or tapping verses
+  </Step>
+  
+  <Step title="Use Sound Feedback">
+    Enable flip sound in Settings if you prefer audio confirmation of page changes
+  </Step>
+</Steps>

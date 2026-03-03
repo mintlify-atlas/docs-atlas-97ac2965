@@ -1,0 +1,699 @@
+---
+title: Installation
+description: Detailed installation instructions for all platforms
+---
+
+## Platform Overview
+
+Open Mushaf Native is available on multiple platforms with various installation methods:
+
+<CardGroup cols={2}>
+  <Card title="Android" icon="android">
+    Google Play Store, APK, or build from source
+  </Card>
+  
+  <Card title="Web / PWA" icon="globe">
+    Browser-based with offline support
+  </Card>
+  
+  <Card title="iOS" icon="apple">
+    Web app installable to home screen
+  </Card>
+  
+  <Card title="Build from Source" icon="code">
+    Full development setup for all platforms
+  </Card>
+</CardGroup>
+
+## Android Installation
+
+### Option 1: Google Play Store (Recommended)
+
+The easiest way to install on Android devices:
+
+<Steps>
+  <Step title="Open Play Store">
+    Navigate to the [Open Mushaf Native page](https://play.google.com/store/apps/details?id=com.adelpro.openmushafnative)
+  </Step>
+  
+  <Step title="Install">
+    Tap the **Install** button
+  </Step>
+  
+  <Step title="Launch">
+    Open the app from your home screen or app drawer
+  </Step>
+</Steps>
+
+<Note>
+  Play Store installation provides automatic updates and the most stable experience.
+</Note>
+
+### Option 2: APK Installation
+
+For devices without Play Store access:
+
+<Steps>
+  <Step title="Download APK">
+    Visit [GitHub Releases](https://github.com/adelpro/open-mushaf-native/releases/latest) and download the latest `.apk` file
+  </Step>
+  
+  <Step title="Enable Unknown Sources">
+    On your Android device:
+    
+    1. Open **Settings**
+    2. Navigate to **Security** or **Privacy**
+    3. Enable **Install from Unknown Sources** or **Install Unknown Apps**
+    4. Grant permission to your browser or file manager
+  </Step>
+  
+  <Step title="Install APK">
+    1. Locate the downloaded APK file
+    2. Tap to open it
+    3. Tap **Install**
+    4. Wait for installation to complete
+    5. Tap **Open** to launch
+  </Step>
+</Steps>
+
+<Warning>
+  Only download APK files from the official [GitHub Releases](https://github.com/adelpro/open-mushaf-native/releases) page. Third-party sources may distribute modified or malicious versions.
+</Warning>
+
+### Option 3: Build Android from Source
+
+For developers who want to build the APK locally:
+
+<Steps>
+  <Step title="Clone Repository">
+    ```bash
+    git clone https://github.com/adelpro/open-mushaf-native.git
+    cd open-mushaf-native
+    ```
+  </Step>
+  
+  <Step title="Install Dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  
+  <Step title="Build APK">
+    For development build:
+    ```bash
+    npm run android:build:preview:local
+    ```
+    
+    For production build:
+    ```bash
+    npm run android:build:production:local
+    ```
+    
+    The APK will be created in the `builds/` directory.
+  </Step>
+  
+  <Step title="Install on Device">
+    Transfer the APK to your Android device and install it following the APK installation steps above.
+  </Step>
+</Steps>
+
+## iOS Installation
+
+Currently, Open Mushaf Native is available on iOS as a Progressive Web App (PWA):
+
+<Steps>
+  <Step title="Open Safari">
+    Navigate to [https://open-mushaf-native.web.app/](https://open-mushaf-native.web.app/) in **Safari browser**
+    
+    <Note>
+      Safari is required for PWA installation on iOS. Other browsers don't support this feature.
+    </Note>
+  </Step>
+  
+  <Step title="Add to Home Screen">
+    1. Tap the **Share** button (square with arrow pointing up)
+    2. Scroll down and tap **Add to Home Screen**
+    3. Edit the name if desired
+    4. Tap **Add**
+  </Step>
+  
+  <Step title="Launch App">
+    The app icon will appear on your home screen. Tap it to launch Open Mushaf Native as a standalone app.
+  </Step>
+</Steps>
+
+<Note>
+  The PWA version works offline after the initial load and provides a native-like experience on iOS.
+</Note>
+
+## Web Application
+
+Use Open Mushaf Native directly in your browser:
+
+### Direct Browser Access
+
+<Steps>
+  <Step title="Visit Web App">
+    Open [https://open-mushaf-native.web.app/](https://open-mushaf-native.web.app/) in any modern browser:
+    - Chrome (recommended)
+    - Firefox
+    - Safari
+    - Edge
+  </Step>
+  
+  <Step title="Start Using">
+    The app loads instantly and works directly in your browser
+  </Step>
+</Steps>
+
+### Install as PWA (Desktop/Android)
+
+<Tabs>
+  <Tab title="Chrome (Desktop)">
+    <Steps>
+      <Step title="Open Web App">
+        Visit [https://open-mushaf-native.web.app/](https://open-mushaf-native.web.app/) in Chrome
+      </Step>
+      
+      <Step title="Install">
+        1. Look for the install icon (➕) in the address bar
+        2. Click **Install**
+        3. The app will open in its own window
+      </Step>
+      
+      <Step title="Access from Apps">
+        Find the installed app in:
+        - Start Menu (Windows)
+        - Applications folder (macOS)
+        - Chrome Apps (chrome://apps)
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="Chrome (Android)">
+    <Steps>
+      <Step title="Open in Chrome">
+        Navigate to [https://open-mushaf-native.web.app/](https://open-mushaf-native.web.app/)
+      </Step>
+      
+      <Step title="Install Prompt">
+        You'll see an "Add to Home Screen" banner at the bottom:
+        1. Tap **Install** or **Add**
+        2. Confirm the installation
+      </Step>
+      
+      <Step title="Launch">
+        The app icon appears on your home screen. Tap to launch.
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="Edge (Desktop)">
+    <Steps>
+      <Step title="Visit Web App">
+        Open [https://open-mushaf-native.web.app/](https://open-mushaf-native.web.app/) in Microsoft Edge
+      </Step>
+      
+      <Step title="Install">
+        1. Click the **App Available** icon in the address bar
+        2. Click **Install**
+        3. The app opens in a standalone window
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+<Note>
+  PWA installation provides:
+  - Standalone app window without browser UI
+  - App icon in your system's app launcher
+  - Offline functionality
+  - Faster startup time
+</Note>
+
+## Building from Source
+
+For developers who want to run, modify, or contribute to the project:
+
+### System Requirements
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node">
+    Version 22 or higher required
+  </Card>
+  
+  <Card title="Expo SDK" icon="mobile">
+    Version 54 (installed automatically)
+  </Card>
+  
+  <Card title="Platform Tools" icon="screwdriver-wrench">
+    Android Studio (Android) or Xcode (iOS/macOS)
+  </Card>
+  
+  <Card title="Git" icon="git">
+    For cloning the repository
+  </Card>
+</CardGroup>
+
+### Development Setup
+
+<Steps>
+  <Step title="Install Node.js">
+    Download and install Node.js v22+ from [nodejs.org](https://nodejs.org/)
+    
+    Verify installation:
+    ```bash
+    node --version  # Should show v22.x.x or higher
+    npm --version
+    ```
+  </Step>
+  
+  <Step title="Clone Repository">
+    ```bash
+    git clone https://github.com/adelpro/open-mushaf-native.git
+    cd open-mushaf-native
+    ```
+  </Step>
+  
+  <Step title="Install Dependencies">
+    ```bash
+    npm install
+    ```
+    
+    This installs all required packages including:
+    - React Native 0.81
+    - Expo SDK 54
+    - TypeScript
+    - Jotai (state management)
+    - All other dependencies
+  </Step>
+  
+  <Step title="Start Development Server">
+    ```bash
+    npm start
+    # or
+    npx expo start
+    ```
+    
+    This opens the Expo development tools in your terminal.
+  </Step>
+</Steps>
+
+### Running on Different Platforms
+
+<Tabs>
+  <Tab title="Android">
+    <CodeGroup>
+    ```bash Development Build
+    npm run android
+    # or with specific device
+    npm run android -d
+    ```
+    
+    ```bash Production Build
+    npm run android:prod
+    ```
+    </CodeGroup>
+    
+    **Prerequisites:**
+    - Android Studio installed
+    - Android SDK configured
+    - Android emulator running or physical device connected
+    - USB debugging enabled (for physical devices)
+    
+    <Note>
+      The `-d` flag lets you select which connected device or emulator to use.
+    </Note>
+  </Tab>
+  
+  <Tab title="iOS">
+    <CodeGroup>
+    ```bash Development Build
+    npm run ios
+    ```
+    
+    ```bash Production Build
+    npm run ios:prod
+    ```
+    </CodeGroup>
+    
+    **Prerequisites:**
+    - macOS required
+    - Xcode installed
+    - iOS Simulator or physical device
+    - Apple Developer account (for physical devices)
+    
+    <Warning>
+      iOS builds can only be created on macOS with Xcode installed.
+    </Warning>
+  </Tab>
+  
+  <Tab title="Web">
+    <CodeGroup>
+    ```bash Development Server
+    npm run web
+    ```
+    
+    ```bash Export Static Build
+    npm run web:export
+    ```
+    
+    ```bash Export PWA
+    npm run web:export:pwa
+    ```
+    
+    ```bash Serve Build Locally
+    npm run web:serve
+    ```
+    </CodeGroup>
+    
+    The web version runs at `http://localhost:19006` by default.
+  </Tab>
+  
+  <Tab title="Expo Go">
+    The easiest way to test on physical devices:
+    
+    <Steps>
+      <Step title="Install Expo Go">
+        Download **Expo Go** from:
+        - [Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent) (Android)
+        - [App Store](https://apps.apple.com/app/expo-go/id982107779) (iOS)
+      </Step>
+      
+      <Step title="Start Dev Server">
+        ```bash
+        npm start
+        ```
+      </Step>
+      
+      <Step title="Scan QR Code">
+        - Android: Scan the QR code with Expo Go app
+        - iOS: Scan with Camera app, then open in Expo Go
+      </Step>
+    </Steps>
+    
+    <Note>
+      Expo Go has some limitations. For full native features, use development builds.
+    </Note>
+  </Tab>
+</Tabs>
+
+### Advanced Build Commands
+
+The project includes several build scripts:
+
+<CodeGroup>
+```bash Clear Cache
+npm run start:clear
+```
+
+```bash Production Mode
+npm run start:prod
+```
+
+```bash Prebuild Native Projects
+npm run prebuild
+```
+
+```bash EAS Build (Android Preview)
+npm run android:build:preview:local
+```
+
+```bash EAS Build (Android Production)
+npm run android:build:production:local
+```
+</CodeGroup>
+
+### Development Tools
+
+<CardGroup cols={2}>
+  <Card title="Linting" icon="broom">
+    ```bash
+    npm run lint
+    npm run lint:fix
+    ```
+  </Card>
+  
+  <Card title="Type Checking" icon="check">
+    TypeScript type checking runs automatically. Configure in `tsconfig.json`
+  </Card>
+  
+  <Card title="Testing" icon="flask">
+    ```bash
+    npm test
+    ```
+  </Card>
+  
+  <Card title="Health Check" icon="stethoscope">
+    ```bash
+    npm run doctor
+    ```
+  </Card>
+</CardGroup>
+
+## Project Structure
+
+Understanding the codebase:
+
+```
+open-mushaf-native/
+├── app/                    # Application screens (Expo Router)
+│   ├── (tabs)/            # Tab-based navigation
+│   │   ├── index.tsx     # Main Mushaf screen
+│   │   ├── lists.tsx     # Surahs and bookmarks
+│   │   └── (more)/       # Settings and more
+│   ├── search.tsx         # Search functionality
+│   ├── navigation.tsx     # Page/Surah navigation
+│   └── tutorial.tsx       # First-run tutorial
+├── assets/                # Images, fonts, icons
+├── components/            # Reusable React components
+├── constants/             # App constants and configs
+├── hooks/                 # Custom React hooks
+├── store/                 # Jotai state management
+├── utils/                 # Helper functions
+├── app.json              # Expo configuration
+├── package.json          # Dependencies and scripts
+├── tsconfig.json         # TypeScript configuration
+└── eas.json              # EAS Build configuration
+```
+
+## Configuration Files
+
+### app.json
+
+Main Expo configuration:
+
+```json
+{
+  "expo": {
+    "name": "Open Mushaf",
+    "slug": "open-mushaf-native",
+    "version": "4.3.0",
+    "orientation": "default",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.adelpro.openmushafnative",
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.adelpro.openmushafnative"
+    }
+  }
+}
+```
+
+<Note>
+  The app uses the new React Native architecture (`newArchEnabled: true`) for better performance.
+</Note>
+
+### package.json
+
+Key dependencies:
+
+```json
+{
+  "name": "open-mushaf-native",
+  "version": "v4",
+  "dependencies": {
+    "expo": "54.0.30",
+    "react-native": "0.81.5",
+    "react": "19.1.0",
+    "jotai": "^2.12.4",
+    "expo-image": "~3.0.11",
+    "@gorhom/bottom-sheet": "^5.1.4"
+  }
+}
+```
+
+## Contributing
+
+Want to contribute? Great!
+
+<Steps>
+  <Step title="Fork and Clone">
+    1. Fork the repository on GitHub
+    2. Clone your fork locally
+    
+    ```bash
+    git clone https://github.com/your-username/open-mushaf-native.git
+    cd open-mushaf-native
+    ```
+  </Step>
+  
+  <Step title="Create Branch">
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+  </Step>
+  
+  <Step title="Make Changes">
+    - Follow the existing code style
+    - Ensure **zero ESLint errors**
+    - Test your changes thoroughly
+    
+    ```bash
+    npm run lint:fix  # Fix linting issues
+    ```
+  </Step>
+  
+  <Step title="Commit and Push">
+    ```bash
+    git add .
+    git commit -m "Add your feature or fix"
+    git push origin feature/your-feature-name
+    ```
+  </Step>
+  
+  <Step title="Create Pull Request">
+    Open a pull request on GitHub with a clear description of your changes
+  </Step>
+</Steps>
+
+See the full [Contributing Guidelines](https://github.com/adelpro/open-mushaf-native/blob/main/CONTRIBUTING.md) for more details.
+
+## Troubleshooting
+
+### Common Issues
+
+<AccordionGroup>
+  <Accordion title="npm install fails">
+    **Solution:**
+    1. Ensure you're using Node.js v22 or higher
+    2. Clear npm cache:
+    ```bash
+    npm cache clean --force
+    rm -rf node_modules package-lock.json
+    npm install
+    ```
+  </Accordion>
+  
+  <Accordion title="Android build fails">
+    **Solution:**
+    1. Ensure Android Studio and SDK are properly installed
+    2. Set ANDROID_HOME environment variable
+    3. Try cleaning the build:
+    ```bash
+    cd android
+    ./gradlew clean
+    cd ..
+    npx expo start --clear
+    ```
+  </Accordion>
+  
+  <Accordion title="iOS build fails (macOS)">
+    **Solution:**
+    1. Ensure Xcode is installed and up to date
+    2. Install CocoaPods if needed:
+    ```bash
+    sudo gem install cocoapods
+    ```
+    3. Clean iOS build folder:
+    ```bash
+    cd ios
+    rm -rf Pods Podfile.lock
+    pod install
+    cd ..
+    ```
+  </Accordion>
+  
+  <Accordion title="Metro bundler issues">
+    **Solution:**
+    Clear the Metro cache:
+    ```bash
+    npm run start:clear
+    # or
+    npx expo start --clear
+    ```
+  </Accordion>
+  
+  <Accordion title="PWA not installing on iOS">
+    **Solution:**
+    - Ensure you're using Safari browser (required for iOS PWA)
+    - Check that you're on the actual website, not a cached version
+    - Try clearing Safari cache and revisiting
+  </Accordion>
+</AccordionGroup>
+
+## Deployment
+
+For deploying your own instance:
+
+<Tabs>
+  <Tab title="Firebase Hosting">
+    The official web app is hosted on Firebase:
+    
+    ```bash
+    # Install Firebase CLI
+    npm install -g firebase-tools
+    
+    # Login to Firebase
+    firebase login
+    
+    # Deploy to preview
+    npm run deploy:preview
+    
+    # Deploy to production
+    npm run deploy:live
+    ```
+  </Tab>
+  
+  <Tab title="EAS Build">
+    For distributing mobile builds:
+    
+    ```bash
+    # Android preview build
+    npm run android:build:preview
+    
+    # Android production build
+    npm run android:build:production
+    
+    # Submit to Play Store
+    npm run android:submit:production
+    ```
+  </Tab>
+</Tabs>
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/adelpro/open-mushaf-native">
+    View source code and issues
+  </Card>
+  
+  <Card title="Expo Documentation" icon="book" href="https://docs.expo.dev/">
+    Learn more about Expo
+  </Card>
+  
+  <Card title="React Native Docs" icon="react" href="https://reactnative.dev/docs/getting-started">
+    React Native documentation
+  </Card>
+  
+  <Card title="Report Issues" icon="bug" href="https://github.com/adelpro/open-mushaf-native/issues">
+    Bug reports and feature requests
+  </Card>
+</CardGroup>
+
+## Support
+
+Need help with installation?
+
+- Open an issue on [GitHub](https://github.com/adelpro/open-mushaf-native/issues)
+- Contact the developer: adelpro@gmail.com
+- Check existing issues for solutions

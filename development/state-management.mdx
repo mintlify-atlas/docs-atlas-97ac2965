@@ -1,0 +1,393 @@
+---
+title: 'State Management'
+description: 'Jotai atoms, persistent storage with MMKV, and state organization patterns'
+---
+
+## Overview
+
+Open Mushaf Native uses **Jotai** for atomic state management combined with **MMKV** for high-performance persistent storage. This architecture provides a simple, scalable approach to managing application state across native and web platforms.
+
+## Why Jotai?
+
+<CardGroup cols={2}>
+  <Card title="Atomic" icon="atom">
+    Minimal re-renders with fine-grained reactivity
+  </Card>
+  <Card title="TypeScript" icon="code">
+    Full type safety with zero configuration
+  </Card>
+  <Card title="Simple API" icon="lightbulb">
+    React hooks-based, easy to learn
+  </Card>
+  <Card title="Async Native" icon="bolt">
+    Built-in async atom support
+  </Card>
+</CardGroup>
+
+## Storage Architecture
+
+The app uses a platform-specific storage layer that automatically switches between MMKV (native) and localStorage (web):
+
+<Tabs>
+  <Tab title="Native Implementation">
+    ```typescript utils/storage/createStorage.ts
+    import { createJSONStorage } from 'jotai/utils';
+    import { MMKV } from 'react-native-mmkv';
+    
+    const mmkv = new MMKV();
+    
+    const storage = {
+      getItem: (key: string): string | null => mmkv.getString(key) ?? null,
+      setItem: (key: string, value: string): void => mmkv.set(key, value),
+      removeItem: (key: string): void => mmkv.delete(key),
+      subscribe: (
+        key: string,
+        callback: (value: string | null) => void,
+      ): (() => void) => {
+        const listener = (changedKey: string) => {
+          if (changedKey === key) callback(storage.getItem(key));
+        };
+        const { remove } = mmkv.addOnValueChangedListener(listener);
+        return () => remove();
+      },
+    };
+    
+    export function createStorage<T>() {
+      return createJSONStorage<T>(() => storage);
+    }
+    ```
+    
+    <Note>
+    MMKV provides synchronous, thread-safe storage that's significantly faster than AsyncStorage.
+    </Note>
+  </Tab>
+  
+  <Tab title="Web Implementation">
+    ```typescript utils/storage/createStorage.web.ts
+    import { createJSONStorage } from 'jotai/utils';
+    
+    export function createStorage<T>() {
+      return createJSONStorage<T>();
+    }
+    ```
+    
+    The web version automatically uses `localStorage` via Jotai's default implementation.
+  </Tab>
+</Tabs>
+
+## Creating Persistent Atoms
+
+The app provides a helper function to create atoms with automatic persistence:
+
+```typescript jotai/createAtomWithStorage.ts
+import { atomWithStorage } from 'jotai/utils';
+import { createStorage } from '@/utils/storage/createStorage';
+
+export function createAtomWithStorage<T>(key: string, initialValue: T) {
+  return atomWithStorage<T>(key, initialValue, createStorage<T>(), {
+    getOnInit: true,
+  });
+}
+```
+
+### Key Features
+
+- **Type-safe**: Generic type parameter ensures type safety
+- **Auto-hydration**: `getOnInit: true` loads persisted value immediately
+- **Platform-agnostic**: Works on iOS, Android, and Web
+- **Automatic serialization**: JSON serialization handled by Jotai
+
+## State Organization
+
+All global atoms are defined in `jotai/atoms.ts` and organized by feature:
+
+### UI State Atoms
+
+<CodeGroup>
+
+```typescript Bottom Menu
+export const bottomMenuState = createAtomWithStorage<boolean>(
+  'BottomMenuState',
+  true,
+);
+```
+
+```typescript Top Menu
+export const topMenuState = createAtomWithStorage<boolean>(
+  'TopMenuState',
+  false,
+);
+```
+
+```typescript Reading Banner
+export const readingBannerCollapsedState = createAtomWithStorage<boolean>(
+  'ReadingBannerCollapsedState',
+  false,
+);
+```
+
+</CodeGroup>
+
+### Reading State Atoms
+
+<CodeGroup>
+
+```typescript Current Page
+export const currentSavedPage = createAtomWithStorage<number>(
+  'CurrentSavedPage',
+  1,
+);
+```
+
+```typescript Mushaf Riwaya
+import { Riwaya } from '@/types/riwaya';
+
+export const mushafRiwaya = createAtomWithStorage<Riwaya | undefined>(
+  'MushafRiwaya',
+  undefined,
+);
+```
+
+```typescript Mushaf Contrast
+export const mushafContrast = createAtomWithStorage<number>(
+  'MushafContrast',
+  0.5,
+);
+```
+
+</CodeGroup>
+
+### Feature State Atoms
+
+<CodeGroup>
+
+```typescript Advanced Search
+export const advancedSearch = createAtomWithStorage<boolean>(
+  'AdvancedSearch',
+  false,
+);
+```
+
+```typescript Tafseer Tab
+import { TafseerTabs } from '@/types';
+
+export const tafseerTab = createAtomWithStorage<TafseerTabs>(
+  'TafseerTab',
+  'katheer',
+);
+```
+
+```typescript Flip Sound
+export const flipSound = createAtomWithStorage<boolean>('FlipSound', false);
+```
+
+</CodeGroup>
+
+### Settings & Notifications
+
+<CodeGroup>
+
+```typescript Tutorial State
+export const finishedTutorial = createAtomWithStorage<boolean | undefined>(
+  'FinishedTutorial',
+  undefined,
+);
+```
+
+```typescript Hizb Notification
+export const hizbNotification = createAtomWithStorage<number>(
+  'HizbNotification',
+  0,
+);
+```
+
+```typescript Daily Tracker Goal
+export const dailyTrackerGoal = createAtomWithStorage<number>(
+  'DailyTrackerGoal',
+  1,
+);
+```
+
+</CodeGroup>
+
+## Advanced Patterns
+
+### 1. Atoms with Date-based Reset
+
+Some atoms automatically reset based on the current date:
+
+```typescript jotai/atoms.ts
+import { observe } from 'jotai-effect';
+
+type DailyTrackerProgress = {
+  value: number;
+  date: string;
+};
+
+export const dailyTrackerCompleted =
+  createAtomWithStorage<DailyTrackerProgress>('DailyTrackerCompleted', {
+    value: 0,
+    date: new Date().toDateString(),
+  });
+
+// Auto-reset when date changes
+observe((get, set) => {
+  (async () => {
+    const stored = await get(dailyTrackerCompleted);
+    const today = new Date().toDateString();
+
+    if (stored.date !== today) {
+      set(dailyTrackerCompleted, { value: 0, date: today });
+    }
+  })();
+});
+```
+
+<Note>
+The `observe` function from `jotai-effect` enables reactive side effects that run when atoms change.
+</Note>
+
+### 2. Auto-hide Menu Effect
+
+The top menu automatically hides after a configured duration:
+
+```typescript jotai/atoms.ts
+observe((get, set) => {
+  const duration = parseInt(
+    process.env.EXPO_PUBLIC_TOP_MENU_HIDE_DURATION_MS || '5000',
+    10,
+  );
+  if (get(topMenuState)) {
+    const timerId = setTimeout(() => {
+      set(topMenuState, false);
+    }, duration);
+
+    return () => clearTimeout(timerId);
+  }
+});
+```
+
+### 3. Yesterday Page Tracking
+
+Tracks the last page from the previous day for reading continuity:
+
+```typescript jotai/atoms.ts
+type PageWithDate = {
+  value: number;
+  date: string;
+};
+
+export const yesterdayPage = createAtomWithStorage<PageWithDate>(
+  'YesterdayPage',
+  {
+    value: 1,
+    date: new Date().toDateString(),
+  },
+);
+
+// Update yesterday page when date changes
+observe((get, set) => {
+  (async () => {
+    const today = new Date().toDateString();
+    const saved = await get(yesterdayPage);
+    const lastPage = await get(currentSavedPage);
+
+    if (saved.date !== today) {
+      set(yesterdayPage, { value: lastPage, date: today });
+    }
+  })();
+});
+```
+
+## Using Atoms in Components
+
+### Reading Atom Values
+
+```typescript Example Component
+import { useAtomValue } from 'jotai/react';
+import { bottomMenuState } from '@/jotai/atoms';
+
+export function MyComponent() {
+  const menuVisible = useAtomValue(bottomMenuState);
+  
+  return (
+    <View style={{ display: menuVisible ? 'flex' : 'none' }}>
+      {/* ... */}
+    </View>
+  );
+}
+```
+
+### Writing Atom Values
+
+```typescript Example with Updates
+import { useAtom } from 'jotai/react';
+import { currentSavedPage } from '@/jotai/atoms';
+
+export function PageNavigator() {
+  const [page, setPage] = useAtom(currentSavedPage);
+  
+  return (
+    <Button onPress={() => setPage(page + 1)}>
+      Next Page
+    </Button>
+  );
+}
+```
+
+### Write-only Access
+
+```typescript Example with Setter
+import { useSetAtom } from 'jotai/react';
+import { topMenuState } from '@/jotai/atoms';
+
+export function MenuToggle() {
+  const setMenuState = useSetAtom(topMenuState);
+  
+  return (
+    <Button onPress={() => setMenuState(true)}>
+      Show Menu
+    </Button>
+  );
+}
+```
+
+## Performance Considerations
+
+<CardGroup cols={2}>
+  <Card title="Atomic Updates" icon="zap">
+    Only components using changed atoms re-render
+  </Card>
+  <Card title="Synchronous Storage" icon="database">
+    MMKV provides instant read/write operations
+  </Card>
+  <Card title="Lazy Initialization" icon="clock">
+    Atoms only initialize when first accessed
+  </Card>
+  <Card title="Subscription Based" icon="bell">
+    Storage changes trigger automatic updates
+  </Card>
+</CardGroup>
+
+## Debugging
+
+Jotai DevTools integration (development only):
+
+```typescript
+import { DevTools } from 'jotai-devtools';
+
+// In your root component
+{__DEV__ && <DevTools />}
+```
+
+## Best Practices
+
+1. **Use descriptive storage keys**: Keys should be unique and descriptive
+2. **Define types explicitly**: Always specify generic type parameter
+3. **Group related atoms**: Organize atoms by feature or domain
+4. **Avoid atom bloat**: Don't create atoms for purely local component state
+5. **Use effects sparingly**: Only for cross-cutting concerns like auto-reset logic
+
+<Note>
+For complex derived state, consider using Jotai's `atom((get) => ...)` pattern instead of creating additional persistent atoms.
+</Note>

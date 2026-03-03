@@ -1,0 +1,215 @@
+---
+title: Development Setup
+description: Set up your development environment for Open Mushaf Native
+---
+
+Get started with developing Open Mushaf Native by setting up your local environment.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js v22+** - Required for running the project
+- **npm or yarn** - Package manager
+- **Git** - Version control
+- **Expo CLI** - Built into the project dependencies
+
+<Note>
+  Open Mushaf Native uses **Expo SDK 52+** and **React Native 0.81.5**
+</Note>
+
+### Platform-Specific Requirements
+
+<Tabs>
+  <Tab title="Android">
+    - Android Studio
+    - Android SDK
+    - Android Emulator or physical device
+  </Tab>
+  <Tab title="iOS">
+    - macOS required
+    - Xcode 14+
+    - iOS Simulator or physical device
+    - CocoaPods
+  </Tab>
+  <Tab title="Web">
+    - Modern web browser (Chrome, Firefox, Safari, or Edge)
+  </Tab>
+</Tabs>
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/adelpro/open-mushaf-native.git
+    cd open-mushaf-native
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+    
+    Or if you prefer yarn:
+    ```bash
+    yarn install
+    ```
+  </Step>
+
+  <Step title="Install Husky hooks">
+    Git hooks are automatically set up when you install dependencies via the `prepare` script:
+    ```bash
+    npm run prepare
+    ```
+  </Step>
+</Steps>
+
+## Running the App
+
+### Development Server
+
+<CodeGroup>
+```bash npm
+npm start
+```
+
+```bash yarn
+yarn start
+```
+</CodeGroup>
+
+This starts the Expo development server. You'll see a QR code in the terminal that you can scan with the Expo Go app.
+
+### Platform-Specific Commands
+
+<Tabs>
+  <Tab title="Web">
+    ```bash
+    npm run web
+    ```
+    Opens the app in your default browser at `localhost:8081`
+  </Tab>
+  
+  <Tab title="Android">
+    ```bash
+    npm run android
+    ```
+    Runs the app on a connected Android device or emulator
+    
+    For production build:
+    ```bash
+    npm run android:prod
+    ```
+  </Tab>
+  
+  <Tab title="iOS">
+    ```bash
+    npm run ios
+    ```
+    Runs the app on iOS simulator (macOS only)
+    
+    For production build:
+    ```bash
+    npm run ios:prod
+    ```
+  </Tab>
+</Tabs>
+
+## Advanced Development Options
+
+### Clear Cache
+
+If you encounter unexpected behavior, clear the cache:
+
+```bash
+npm run start:clear
+```
+
+### Production Mode
+
+Test the app in production mode locally:
+
+```bash
+npm run start:prod
+```
+
+### Bundle Analysis
+
+Analyze your bundle size with Expo Atlas:
+
+```bash
+npm run start:atlas
+```
+
+### React Scan
+
+Monitor component re-renders in development:
+
+```bash
+npm run scan
+```
+
+## Prebuild
+
+Generate native Android and iOS directories:
+
+```bash
+npm run prebuild
+```
+
+<Warning>
+  This command will clean and regenerate the `android/` and `ios/` folders. Any manual changes to native code will be lost.
+</Warning>
+
+## Troubleshooting
+
+### Run Expo Doctor
+
+Diagnose common issues with your Expo setup:
+
+```bash
+npm run doctor
+```
+
+### React Compiler Health Check
+
+Verify React Compiler compatibility:
+
+```bash
+npm run react-compiler-check
+```
+
+### Common Issues
+
+<AccordionGroup>
+  <Accordion title="Port already in use">
+    If port 8081 is already in use, Expo will automatically select another port, or you can manually specify one:
+    ```bash
+    npx expo start --port 8082
+    ```
+  </Accordion>
+
+  <Accordion title="Metro bundler cache issues">
+    Clear the cache and restart:
+    ```bash
+    npm run start:clear
+    ```
+  </Accordion>
+
+  <Accordion title="Native module linking errors">
+    Rebuild the native directories:
+    ```bash
+    npm run prebuild
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Once your environment is set up:
+
+1. Read the [Contributing Guidelines](/contributing/guidelines)
+2. Learn about [Testing](/contributing/testing)
+3. Start contributing to the project

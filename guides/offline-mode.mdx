@@ -1,0 +1,220 @@
+---
+title: Offline Mode
+description: How offline mode works, caching strategy, and image storage in Open Mushaf Native
+icon: wifi-off
+---
+
+Open Mushaf Native is designed to work fully offline once the app and Mushaf images are downloaded.
+
+## How Offline Mode Works
+
+The app uses a preloading and caching strategy to ensure smooth navigation without requiring an internet connection.
+
+### Image Preloading
+
+Mushaf page images are preloaded using the `useImagePreloader` hook (`hooks/useImagePreloader.ts`).
+
+<Steps>
+  <Step title="Current Page Load">
+    The app immediately loads the current Mushaf page you're viewing.
+  </Step>
+  <Step title="Predictive Preloading">
+    The app automatically preloads nearby pages:
+    - Current page
+    - Previous page (currentPage - 1)
+    - Next page (currentPage + 1)
+    - Next next page (currentPage + 2)
+  </Step>
+  <Step title="Cache Management">
+    The preloader maintains a cache of only nearby pages to limit memory usage.
+  </Step>
+</Steps>
+
+### Preloading Logic
+
+The preloader follows this strategy:
+
+```typescript
+// Pages to preload
+const pagesToPreload = [
+  currentPage,                          // Current page
+  Math.max(currentPage - 1, 1),        // Previous page
+  Math.min(currentPage + 1, totalPages), // Next page
+  Math.min(currentPage + 2, totalPages), // Next next page
+];
+```
+
+<Info>
+Preloading happens automatically as you navigate. You don't need to manually download pages.
+</Info>
+
+## Caching Strategy
+
+### Smart Cache Management
+
+The app uses an intelligent caching system:
+
+1. **Parallel Downloads:** All 4 pages (current, -1, +1, +2) are downloaded in parallel using `Promise.all()`
+2. **Duplicate Prevention:** Already preloaded pages are tracked in `preloadedPagesRef` to avoid re-downloading
+3. **Cache Limit:** Only pages within the current viewing window are kept in cache
+4. **Automatic Cleanup:** Pages far from the current position are removed from cache to save memory
+
+### Cache Retention
+
+Pages are kept in cache only if they are:
+- The current page, OR
+- Within 1 page before the current page, OR  
+- Within 2 pages after the current page
+
+This ensures:
+- Smooth backward navigation (1 page cached)
+- Very smooth forward navigation (2 pages cached)
+- Limited memory footprint
+
+<Note>
+The cache automatically updates as you navigate. Old pages are removed and new pages are preloaded based on your current position.
+</Note>
+
+## Storage Implementation
+
+### Asset Storage
+
+Mushaf images are stored as bundled assets using Expo's Asset system:
+
+- **Image Maps:** `constants/imagesMapHafs.ts` and `constants/imagesMapWarsh.ts`
+- **Asset Loading:** Uses `Asset.fromModule()` to reference images
+- **Download API:** Uses `asset.downloadAsync()` to ensure images are cached
+
+### Data Storage
+
+App data is stored using MMKV for fast, synchronous access:
+
+**Storage Configuration** (`utils/storage/createStorage.ts`):
+
+```typescript
+const storage = {
+  getItem: (key: string) => mmkv.getString(key) ?? null,
+  setItem: (key: string, value: string) => mmkv.set(key, value),
+  removeItem: (key: string) => mmkv.delete(key),
+  subscribe: (key, callback) => mmkv.addOnValueChangedListener(...)
+};
+```
+
+### What's Stored Offline
+
+All app data is stored locally:
+
+<Tabs>
+  <Tab title="User Preferences">
+    - Current reading position (`currentSavedPage`)
+    - Theme settings (via system color scheme)
+    - Mushaf contrast level (`mushafContrast`)
+    - Flip sound preference (`flipSound`)
+    - Selected Riwaya (`mushafRiwaya`)
+    - Menu states (`bottomMenuState`, `topMenuState`)
+  </Tab>
+  <Tab title="Reading Progress">
+    - Daily tracker goal (`dailyTrackerGoal`)
+    - Daily tracker completed (`dailyTrackerCompleted`)
+    - Yesterday's page (`yesterdayPage`)
+    - Reading banner collapsed state (`readingBannerCollapsedState`)
+  </Tab>
+  <Tab title="Quran Metadata">
+    - Surah data (114 Surahs with names and Ayah counts)
+    - Ayah data (6236 verses with page mappings)
+    - Juz and Hizb positions
+    - Specs data (total pages per Riwaya)
+  </Tab>
+</Tabs>
+
+## Riwaya-Specific Caching
+
+The preloader adapts to the selected Riwaya:
+
+```typescript
+const imagesMap = mushafRiwayaValue === 'hafs' 
+  ? imagesMapHafs 
+  : imagesMapWarsh;
+```
+
+- **Hafs:** Uses Hafs-specific page images (typically 604 pages)
+- **Warsh:** Uses Warsh-specific page images (page count may differ)
+
+<Info>
+When you change Riwaya, the app will need to download the new set of Mushaf images. Previously cached images from the other Riwaya are not automatically deleted.
+</Info>
+
+## Performance Optimizations
+
+### Efficient Loading
+
+1. **Check Before Download:** The preloader checks `asset.downloaded` before downloading
+2. **Parallel Processing:** Multiple pages download simultaneously
+3. **Ref-Based Tracking:** Uses `useRef` to avoid re-renders during cache updates
+4. **Set-Based Lookup:** Uses `Set` for O(1) cache lookup performance
+
+### Memory Management
+
+- **Limited Window:** Only 4 pages in memory at once
+- **Automatic Cleanup:** Old pages removed as you navigate
+- **No Manual Management:** Everything handled automatically
+
+## Error Handling
+
+The preloader includes error handling:
+
+```typescript
+try {
+  await Promise.all(assetsToLoad.map(async (asset) => {
+    if (!asset.downloaded) {
+      await asset.downloadAsync();
+    }
+  }));
+} catch (error) {
+  console.error('Error preloading images:', error);
+}
+```
+
+<Warning>
+If image preloading fails (e.g., due to corrupted assets), the error is logged but doesn't crash the app. The current page may still load successfully.
+</Warning>
+
+## Offline-First Design
+
+Open Mushaf Native is built with offline-first principles:
+
+- **No API Calls:** All Quran data is bundled with the app
+- **Local Assets:** Mushaf images are local assets, not remote URLs
+- **Synchronous Storage:** MMKV provides instant read/write without async overhead
+- **No Network Dependency:** The app works identically online and offline
+
+<Note>
+Once the app is installed and the initial assets are downloaded, you never need an internet connection to use Open Mushaf Native.
+</Note>
+
+## Storage Size
+
+Expected storage usage:
+
+- **App Bundle:** Includes all Mushaf images for the default Riwaya
+- **MMKV Storage:** Typically < 1 MB for all user data and preferences
+- **Asset Cache:** Images are cached as needed, with only nearby pages kept in memory
+
+The exact size depends on:
+- Selected Riwaya (Hafs vs. Warsh)
+- Image quality and compression
+- Number of pages (604 for Hafs)
+
+## Best Practices
+
+<Steps>
+  <Step title="Initial Download">
+    When first installing the app, ensure you're on a good connection to download all bundled assets.
+  </Step>
+  <Step title="Riwaya Changes">
+    If you plan to use multiple Riwayat, download both while on WiFi.
+  </Step>
+  <Step title="Regular Use">
+    After initial setup, the app works completely offline with no degradation in performance.
+  </Step>
+</Steps>

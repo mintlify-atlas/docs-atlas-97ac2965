@@ -1,0 +1,690 @@
+---
+title: Utility Functions
+description: Helper functions for search, metadata, dimensions, and platform detection in Open Mushaf Native
+---
+
+## Overview
+
+Open Mushaf Native provides utility functions for common tasks including Quran metadata operations, dimension calculations, platform detection, and progress tracking.
+
+## Search Utilities
+
+### normalizeArabic
+
+Normalizes Arabic text for consistent search and comparison.
+
+```typescript
+import { normalizeArabic } from '@/utils/searchUtils';
+```
+
+Re-exported from `quran-search-engine` package.
+
+**Usage Example:**
+
+```tsx
+import { normalizeArabic } from '@/utils/searchUtils';
+
+const normalized = normalizeArabic('الرَّحْمَـٰنِ');
+// Normalizes hamza, alef variants, etc.
+```
+
+---
+
+### removeTashkeel
+
+Removes Arabic diacritical marks (tashkeel) from text.
+
+```typescript
+import { removeTashkeel } from '@/utils/searchUtils';
+```
+
+Re-exported from `quran-search-engine` package.
+
+**Usage Example:**
+
+```tsx
+import { removeTashkeel } from '@/utils/searchUtils';
+
+const plain = removeTashkeel('بِسْمِ اللَّهِ الرَّحْمَـٰنِ الرَّحِيمِ');
+// Returns: 'بسم الله الرحمن الرحيم'
+```
+
+---
+
+## Quran Metadata Utilities
+
+### getSurahNameByPage
+
+Retrieves the surah name for a given page number.
+
+```typescript
+function getSurahNameByPage(surahs: Surah[], page: number): string
+```
+
+<ParamField path="surahs" type="Surah[]" required>
+  Array of surah metadata
+</ParamField>
+
+<ParamField path="page" type="number" required>
+  Page number (1-604)
+</ParamField>
+
+**Returns:** Surah name in Arabic, or empty string if not found.
+
+**Usage Example:**
+
+```tsx
+import { getSurahNameByPage } from '@/utils/quranMetadataUtils';
+import useQuranMetadata from '@/hooks/useQuranMetadata';
+
+function PageHeader({ page }) {
+  const { surahData } = useQuranMetadata();
+  const surahName = getSurahNameByPage(surahData, page);
+  
+  return <Text>{surahName}</Text>;
+}
+```
+
+---
+
+### getSurahNumberByPage
+
+Retrieves the surah number for a given page.
+
+```typescript
+function getSurahNumberByPage(surahs: Surah[], page: number): string
+```
+
+<ParamField path="surahs" type="Surah[]" required>
+  Array of surah metadata
+</ParamField>
+
+<ParamField path="page" type="number" required>
+  Page number (1-604)
+</ParamField>
+
+**Returns:** Surah number as a string, or `1` if not found.
+
+**Usage Example:**
+
+```tsx
+import { getSurahNumberByPage } from '@/utils/quranMetadataUtils';
+
+function PageInfo({ page, surahs }) {
+  const surahNumber = getSurahNumberByPage(surahs, page);
+  return <Text>Surah {surahNumber}</Text>;
+}
+```
+
+---
+
+### getJuzPositionByPage
+
+Calculates the juz number and thumn position for a given page.
+
+```typescript
+function getJuzPositionByPage(
+  thumns: Thumn[],
+  page: number
+): { thumnInJuz: number; juzNumber: number }
+```
+
+<ParamField path="thumns" type="Thumn[]" required>
+  Array of thumn metadata
+</ParamField>
+
+<ParamField path="page" type="number" required>
+  Page number (1-604)
+</ParamField>
+
+<ResponseField name="return" type="object">
+  <ResponseField name="thumnInJuz" type="number">
+    Position within the Juz (1-16)
+  </ResponseField>
+  <ResponseField name="juzNumber" type="number">
+    Juz number (1-30)
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import { getJuzPositionByPage } from '@/utils/quranMetadataUtils';
+
+function JuzIndicator({ page, thumns }) {
+  const { juzNumber, thumnInJuz } = getJuzPositionByPage(thumns, page);
+  
+  return (
+    <View>
+      <Text>Juz {juzNumber}</Text>
+      <Text>Thumn {thumnInJuz}/16</Text>
+    </View>
+  );
+}
+```
+
+---
+
+### getSEOMetadataByPage
+
+Generates SEO-friendly metadata for a specific Quran page.
+
+```typescript
+function getSEOMetadataByPage(
+  surahs: Surah[],
+  thumns: Thumn[],
+  page: number
+): { title: string; description: string; keywords: string }
+```
+
+<ParamField path="surahs" type="Surah[]" required>
+  Array of surah metadata
+</ParamField>
+
+<ParamField path="thumns" type="Thumn[]" required>
+  Array of thumn metadata
+</ParamField>
+
+<ParamField path="page" type="number" required>
+  Page number (1-604)
+</ParamField>
+
+<ResponseField name="return" type="object">
+  <ResponseField name="title" type="string">
+    Page title for SEO
+  </ResponseField>
+  <ResponseField name="description" type="string">
+    Page description for SEO
+  </ResponseField>
+  <ResponseField name="keywords" type="string">
+    Comma-separated keywords
+  </ResponseField>
+</ResponseField>
+
+**Usage Example:**
+
+```tsx
+import { getSEOMetadataByPage } from '@/utils/quranMetadataUtils';
+import Head from 'next/head';
+
+function PageMeta({ page, surahs, thumns }) {
+  const { title, description, keywords } = getSEOMetadataByPage(
+    surahs,
+    thumns,
+    page
+  );
+  
+  return (
+    <Head>
+      <title>{title}</title>
+      <meta name="description" content={description} />
+      <meta name="keywords" content={keywords} />
+    </Head>
+  );
+}
+```
+
+---
+
+## Riwaya Utilities
+
+### RiwayaByIndice
+
+Converts a riwaya value to its index.
+
+```typescript
+function RiwayaByIndice(value: Riwaya): number
+```
+
+<ParamField path="value" type="Riwaya" required>
+  Riwaya value: `'hafs'` or `'warsh'`
+</ParamField>
+
+**Returns:** Index number: `0` for Hafs, `1` for Warsh.
+
+**Usage Example:**
+
+```tsx
+import { RiwayaByIndice } from '@/utils/riwaya';
+
+const index = RiwayaByIndice('hafs'); // Returns 0
+const warshIndex = RiwayaByIndice('warsh'); // Returns 1
+```
+
+---
+
+### RiwayaByValue
+
+Converts an index to its riwaya value.
+
+```typescript
+function RiwayaByValue(index: number): Riwaya
+```
+
+<ParamField path="index" type="number" required>
+  Index: `0` or `1`
+</ParamField>
+
+**Returns:** Riwaya value: `'hafs'` or `'warsh'`.
+
+**Throws:** Error if index is invalid.
+
+**Usage Example:**
+
+```tsx
+import { RiwayaByValue } from '@/utils/riwaya';
+
+const riwaya = RiwayaByValue(0); // Returns 'hafs'
+const warsh = RiwayaByValue(1); // Returns 'warsh'
+```
+
+---
+
+## Progress Tracking Utilities
+
+### calculateHizbsBetweenPages
+
+Calculates the number of Hizbs between two pages.
+
+```typescript
+function calculateHizbsBetweenPages(
+  previousPage: number,
+  currentPage: number,
+  hizbs: Hizb[]
+): number
+```
+
+<ParamField path="previousPage" type="number" required>
+  Starting page number
+</ParamField>
+
+<ParamField path="currentPage" type="number" required>
+  Ending page number
+</ParamField>
+
+<ParamField path="hizbs" type="Hizb[]" required>
+  Array of Hizb metadata
+</ParamField>
+
+**Returns:** Number of Hizbs completed between the two pages.
+
+**Usage Example:**
+
+```tsx
+import { calculateHizbsBetweenPages } from '@/utils/hizbProgress';
+import { useAtomValue } from 'jotai';
+import { yesterdayPage, currentSavedPage } from '@/jotai/atoms';
+
+function DailyProgress() {
+  const yesterday = useAtomValue(yesterdayPage);
+  const current = useAtomValue(currentSavedPage);
+  const { hizbData } = useQuranMetadata();
+  
+  const hizbsCompleted = calculateHizbsBetweenPages(
+    yesterday.value,
+    current,
+    hizbData
+  );
+  
+  return <Text>{hizbsCompleted} Hizbs completed today</Text>;
+}
+```
+
+---
+
+### calculateThumnsBetweenPages
+
+Calculates the number of Thumns (eighths of a Hizb) between two pages.
+
+```typescript
+function calculateThumnsBetweenPages(
+  startPage: number,
+  endPage: number,
+  thumnData: Thumn[]
+): number
+```
+
+<ParamField path="startPage" type="number" required>
+  Starting page number
+</ParamField>
+
+<ParamField path="endPage" type="number" required>
+  Ending page number
+</ParamField>
+
+<ParamField path="thumnData" type="Thumn[]" required>
+  Array of Thumn metadata
+</ParamField>
+
+**Returns:** Number of Thumns between the pages (0 if invalid input).
+
+**Usage Example:**
+
+```tsx
+import { calculateThumnsBetweenPages } from '@/utils/hizbProgress';
+
+function DetailedProgress({ startPage, endPage, thumns }) {
+  const thumnsRead = calculateThumnsBetweenPages(startPage, endPage, thumns);
+  const percentage = (thumnsRead / 240) * 100; // 240 thumns in Quran
+  
+  return <Text>{percentage.toFixed(1)}% of Quran</Text>;
+}
+```
+
+---
+
+## Dimension Utilities
+
+### getDimensionCoeff
+
+Calculates the scaling coefficient for responsive dimensions.
+
+```typescript
+function getDimensionCoeff({
+  defaultDimension,
+  customDimension
+}): number
+```
+
+<ParamField path="defaultDimension" type="number" required>
+  Default dimension value
+</ParamField>
+
+<ParamField path="customDimension" type="number" required>
+  Custom/target dimension value
+</ParamField>
+
+**Returns:** Scaling coefficient (customDimension / defaultDimension).
+
+**Usage Example:**
+
+```tsx
+import { getDimensionCoeff } from '@/utils/getDimensionCoeff';
+
+function ScalableComponent({ defaultWidth, customWidth }) {
+  const coefficient = getDimensionCoeff({
+    defaultDimension: defaultWidth,
+    customDimension: customWidth
+  });
+  
+  const scaledFontSize = 16 * coefficient;
+  
+  return <Text style={{ fontSize: scaledFontSize }}>Scaled Text</Text>;
+}
+```
+
+---
+
+### BREAKPOINTS
+
+Screen size breakpoint constants.
+
+```typescript
+export const BREAKPOINTS = {
+  COMPACT: 370,  // Very small screens (small phones)
+  MOBILE: 640,   // Mobile screens
+  TABLET: 1024,  // Tablet screens
+};
+```
+
+**Usage Example:**
+
+```tsx
+import { BREAKPOINTS } from '@/utils/dimensionsUtils';
+import { useWindowDimensions } from 'react-native';
+
+function ResponsiveLayout() {
+  const { width } = useWindowDimensions();
+  const isMobile = width < BREAKPOINTS.MOBILE;
+  
+  return isMobile ? <MobileView /> : <DesktopView />;
+}
+```
+
+---
+
+### isCompactView
+
+Checks if the screen width is in compact mode.
+
+```typescript
+function isCompactView(width: number): boolean
+```
+
+<ParamField path="width" type="number" required>
+  Screen width in pixels
+</ParamField>
+
+**Returns:** `true` if width is less than 370px.
+
+**Usage Example:**
+
+```tsx
+import { isCompactView } from '@/utils/dimensionsUtils';
+import { useWindowDimensions } from 'react-native';
+
+function AdaptiveButton() {
+  const { width } = useWindowDimensions();
+  const compact = isCompactView(width);
+  
+  return (
+    <Button size={compact ? 'small' : 'medium'}>
+      {compact ? 'OK' : 'Continue'}
+    </Button>
+  );
+}
+```
+
+---
+
+### isMobileView
+
+Checks if the screen width is in mobile mode.
+
+```typescript
+function isMobileView(width: number): boolean
+```
+
+<ParamField path="width" type="number" required>
+  Screen width in pixels
+</ParamField>
+
+**Returns:** `true` if width is less than 640px.
+
+**Usage Example:**
+
+```tsx
+import { isMobileView } from '@/utils/dimensionsUtils';
+
+function Navigation({ width }) {
+  return isMobileView(width) ? <MobileNav /> : <DesktopNav />;
+}
+```
+
+---
+
+### isTabletView
+
+Checks if the screen width is in tablet mode.
+
+```typescript
+function isTabletView(width: number): boolean
+```
+
+<ParamField path="width" type="number" required>
+  Screen width in pixels
+</ParamField>
+
+**Returns:** `true` if width is less than 1024px.
+
+**Usage Example:**
+
+```tsx
+import { isTabletView } from '@/utils/dimensionsUtils';
+
+function Layout({ width }) {
+  const isTablet = isTabletView(width);
+  return <View columns={isTablet ? 2 : 3} />;
+}
+```
+
+---
+
+### getPaginationRange
+
+Determines the number of page buttons to show based on screen width.
+
+```typescript
+function getPaginationRange(width: number): number
+```
+
+<ParamField path="width" type="number" required>
+  Screen width in pixels
+</ParamField>
+
+**Returns:**
+- `1` for screens < 640px (mobile)
+- `3` for screens 640-1024px (tablet)
+- `5` for screens > 1024px (desktop)
+
+**Usage Example:**
+
+```tsx
+import { getPaginationRange } from '@/utils/dimensionsUtils';
+import { useWindowDimensions } from 'react-native';
+
+function Pagination({ currentPage, totalPages }) {
+  const { width } = useWindowDimensions();
+  const range = getPaginationRange(width);
+  
+  // Show 'range' number of page buttons
+  return <PageButtons current={currentPage} range={range} />;
+}
+```
+
+---
+
+## Platform Detection Utilities
+
+### isWeb
+
+Boolean indicating if the app is running on web.
+
+```typescript
+export const isWeb: boolean;
+```
+
+**Usage Example:**
+
+```tsx
+import { isWeb } from '@/utils/isWeb';
+
+function PlatformSpecificComponent() {
+  return isWeb ? <WebView /> : <NativeView />;
+}
+```
+
+---
+
+### isRTL
+
+Boolean indicating if the app is in RTL (right-to-left) mode.
+
+```typescript
+export const isRTL: boolean;
+```
+
+**Usage Example:**
+
+```tsx
+import { isRTL } from '@/utils/isRTL';
+
+function DirectionalLayout() {
+  return (
+    <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+      <Content />
+    </View>
+  );
+}
+```
+
+---
+
+### debug
+
+Boolean indicating if debug mode is enabled.
+
+```typescript
+export const debug: boolean;
+```
+
+Based on `EXPO_PUBLIC_DEBUG` environment variable.
+
+**Usage Example:**
+
+```tsx
+import { debug } from '@/utils/isDEBUG';
+
+function App() {
+  if (debug) {
+    console.log('Debug mode enabled');
+  }
+  
+  return <MainApp />;
+}
+```
+
+---
+
+## Version Utilities
+
+### getAppVersion
+
+Retrieves the current app version.
+
+```typescript
+function getAppVersion(): string
+```
+
+**Returns:** Version string (e.g., `'1.2.3'`), or `'0.0.0'` if unavailable.
+
+**Behavior:**
+- In development: Returns version from Expo config
+- In production: Returns native application version
+
+**Usage Example:**
+
+```tsx
+import { getAppVersion } from '@/utils/getVersion';
+
+function AboutScreen() {
+  const version = getAppVersion();
+  return <Text>Version {version}</Text>;
+}
+```
+
+---
+
+### getBuildVersion
+
+Retrieves the current build version.
+
+```typescript
+function getBuildVersion(): string
+```
+
+**Returns:** Build version string (e.g., `'123'`), or `'000'` if unavailable.
+
+**Usage Example:**
+
+```tsx
+import { getAppVersion, getBuildVersion } from '@/utils/getVersion';
+
+function VersionInfo() {
+  return (
+    <Text>
+      {getAppVersion()} (Build {getBuildVersion()})
+    </Text>
+  );
+}
+```

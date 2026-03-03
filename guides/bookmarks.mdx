@@ -1,0 +1,344 @@
+---
+title: Bookmarks & Reading Position
+description: Save your reading position and use the reading position banner to manage bookmarks
+icon: bookmark
+---
+
+Open Mushaf Native automatically tracks your reading position and provides tools to save and return to your place in the Quran.
+
+## Reading Position Management
+
+The app maintains two types of reading positions:
+
+1. **Saved Reading Position:** Your permanent bookmark (stored in `currentSavedPage` atom)
+2. **Temporary Navigation:** Pages you visit without changing your saved position
+
+### Current Saved Page
+
+Your reading position is automatically saved when:
+
+- You navigate to a page without the `temporary=true` parameter
+- The page is within valid bounds (1 to total pages)
+- You're not in temporary navigation mode
+
+The saved page is stored in the `currentSavedPage` atom and persists using MMKV storage.
+
+## Reading Position Banner
+
+When you navigate in temporary mode (e.g., from the navigation screen), a Reading Position Banner appears at the bottom of the screen.
+
+### Banner Location
+
+**Component:** `components/ReadingPositionBanner.tsx`
+
+The banner only appears when:
+- You're in temporary navigation mode (`temporary=true`)
+- Your current page differs from your saved reading position
+
+### Banner Features
+
+<Info>
+The Reading Position Banner shows: "العودة إلى موضع القراءة (صفحة X)" - "Return to reading position (Page X)"
+</Info>
+
+#### Collapsible Design
+
+The banner has two states:
+
+<Tabs>
+  <Tab title="Collapsed">
+    **Height:** 60px (`READING_BANNER_HEIGHT_CLOSED`)
+    
+    Shows:
+    - Return message with saved page number
+    - Chevron-down icon
+    
+    Tap to expand and reveal action buttons.
+  </Tab>
+  <Tab title="Expanded">
+    **Height:** 120px (`READING_BANNER_HEIGHT_OPEN`)
+    
+    Shows:
+    - Return message
+    - Chevron-up icon
+    - Two action buttons
+    
+    Tap to collapse.
+  </Tab>
+</Tabs>
+
+### Banner Actions
+
+The expanded banner provides two actions:
+
+<Steps>
+  <Step title="Save Current Position (حفظ)">
+    **Primary Button** with bookmark icon
+    
+    What it does:
+    - Saves the current page as your reading position
+    - Updates `currentSavedPage` to the current page
+    - Updates `yesterdayPage` with current page and date
+    - Removes the `temporary` parameter from the URL
+    - Hides the banner
+  </Step>
+  <Step title="Return to Saved Position (العودة)">
+    **Outlined Button** with arrow icon
+    
+    What it does:
+    - Navigates back to your saved reading position
+    - Removes the `temporary` parameter from the URL
+    - Hides the banner
+  </Step>
+</Steps>
+
+### Using the Reading Position Banner
+
+<Steps>
+  <Step title="Browse Temporarily">
+    Use the navigation screen to browse different pages. The banner appears automatically.
+  </Step>
+  <Step title="Expand Banner">
+    Tap the banner to expand and see action buttons.
+  </Step>
+  <Step title="Choose Action">
+    - Tap **حفظ** (Save) to bookmark the current page
+    - Tap **العودة** (Return) to go back to your saved position
+  </Step>
+</Steps>
+
+<Note>
+The banner's collapsed state is saved in `readingBannerCollapsedState` and persists across navigation.
+</Note>
+
+## Yesterday Page Tracking
+
+The app tracks your reading position from the previous day.
+
+### How It Works
+
+```typescript
+type PageWithDate = {
+  value: number;  // Page number
+  date: string;   // Date as string
+};
+```
+
+The `yesterdayPage` atom stores:
+- **value:** Last saved page number
+- **date:** Date when it was saved
+
+### Automatic Reset
+
+Using Jotai's `observe` effect, the app:
+
+1. Checks if the stored date matches today's date
+2. If the date changed (new day), updates `yesterdayPage` with:
+   - Current `currentSavedPage` as the value
+   - Today's date
+
+This happens automatically when the app launches.
+
+<Info>
+Yesterday page is useful for daily reading trackers and progress monitoring.
+</Info>
+
+## Reading Position Hook
+
+The `useCurrentPage` hook (`hooks/useCurrentPage.ts`) manages reading position logic.
+
+### Hook Return Values
+
+```typescript
+return {
+  currentPage,              // Current page being viewed
+  currentSavedPage,         // Saved reading position
+  setCurrentPage,           // Function to update reading position
+  isTemporaryNavigation,    // Boolean: true if in temporary mode
+};
+```
+
+### Temporary Navigation Detection
+
+The hook determines if you're in temporary mode:
+
+```typescript
+const isTemporaryNavigation = 
+  temporary === 'true' && parsedPage !== currentSavedPageValue;
+```
+
+Conditions:
+- URL has `temporary=true` parameter, AND
+- Current page differs from saved page
+
+## Saving Reading Position
+
+The `setCurrentPage` function handles saving:
+
+<Steps>
+  <Step title="Validate Page Number">
+    Ensures the page is within valid bounds:
+    - Minimum: Page 1
+    - Maximum: Total pages for selected Riwaya
+  </Step>
+  <Step title="Check Temporary Mode">
+    If `temporary=true`, the function returns early without saving.
+  </Step>
+  <Step title="Update Saved Page">
+    Sets `currentSavedPage` atom to the new page number.
+  </Step>
+  <Step title="Update Widget">
+    Calls `updateAndroidWidget()` to sync with home screen widget (Android only).
+  </Step>
+</Steps>
+
+## Automatic Position Saving
+
+Reading position is automatically saved when:
+
+### Page Load from URL
+
+```typescript
+useEffect(() => {
+  const parsedPage = parseInt(pageParam);
+  if (!isNaN(parsedPage) && temporary !== 'true') {
+    setCurrentSavedPageValue(parsedPage);
+    updateAndroidWidget();
+  }
+}, [pageParam, setCurrentSavedPageValue, temporary]);
+```
+
+When you:
+- Navigate to a page via URL parameter
+- The `temporary` parameter is not `'true'`
+- The page number is valid
+
+### Direct Navigation
+
+When you navigate to a page without using the navigation screen:
+- The page is immediately saved as your reading position
+- No banner appears
+- The `temporary` parameter is absent from the URL
+
+## Integration with Daily Tracker
+
+Reading position integrates with the daily tracker:
+
+- **Yesterday Page:** Starting point for tracking daily progress
+- **Current Page:** Used to calculate how much you've read today
+- **Daily Goal:** Compared against pages read since yesterday
+
+<Note>
+See the Daily Tracker documentation for more details on progress tracking.
+</Note>
+
+## State Persistence
+
+All reading position data is persisted using MMKV:
+
+<Tabs>
+  <Tab title="currentSavedPage">
+    **Type:** `number`
+    
+    **Default:** `1`
+    
+    **Storage Key:** `'CurrentSavedPage'`
+    
+    Stores your current reading position.
+  </Tab>
+  <Tab title="yesterdayPage">
+    **Type:** `PageWithDate`
+    
+    **Default:** `{ value: 1, date: new Date().toDateString() }`
+    
+    **Storage Key:** `'YesterdayPage'`
+    
+    Stores yesterday's reading position with date.
+  </Tab>
+  <Tab title="readingBannerCollapsedState">
+    **Type:** `boolean`
+    
+    **Default:** `false`
+    
+    **Storage Key:** `'ReadingBannerCollapsedState'`
+    
+    Stores whether the banner is collapsed or expanded.
+  </Tab>
+</Tabs>
+
+## Navigation Patterns
+
+### Scenario 1: Casual Browsing
+
+<Steps>
+  <Step title="You're reading page 100">
+    Current saved position: Page 100
+  </Step>
+  <Step title="Open navigation to check page 200">
+    Navigate to page 200 with `temporary=true`
+    
+    Banner appears showing "Return to reading position (Page 100)"
+  </Step>
+  <Step title="Return to reading">
+    Tap "العودة" (Return) to go back to page 100
+  </Step>
+</Steps>
+
+### Scenario 2: Finding a New Position
+
+<Steps>
+  <Step title="You're reading page 100">
+    Current saved position: Page 100
+  </Step>
+  <Step title="Navigate to page 200">
+    Navigate with `temporary=true`
+    
+    Banner appears
+  </Step>
+  <Step title="Save new position">
+    Tap "حفظ" (Save) to bookmark page 200
+    
+    Your reading position updates to page 200, banner disappears
+  </Step>
+</Steps>
+
+### Scenario 3: Direct Navigation
+
+<Steps>
+  <Step title="Navigate without temporary mode">
+    Navigate directly to page 200 (no `temporary=true`)
+  </Step>
+  <Step title="Position auto-saved">
+    Page 200 becomes your saved reading position immediately
+    
+    No banner appears
+  </Step>
+</Steps>
+
+## Accessibility
+
+The Reading Position Banner includes full accessibility support:
+
+- **Collapse Button:** `accessibilityLabel` indicates expand/collapse state
+- **Save Button:** 
+  - `accessibilityLabel`: "حفظ موضع الحالي" (Save current position)
+  - `accessibilityHint`: Shows current page number
+- **Return Button:**
+  - `accessibilityLabel`: "العودة إلى موضع القراءة" (Return to reading position)
+  - `accessibilityHint`: Shows saved page number
+
+Screen readers will announce the current page, saved page, and available actions.
+
+## Best Practices
+
+<Steps>
+  <Step title="Regular Reading">
+    Navigate directly to continue where you left off. Your position saves automatically.
+  </Step>
+  <Step title="Looking Up References">
+    Use the navigation screen with temporary mode to check other pages without losing your place.
+  </Step>
+  <Step title="Marking Progress">
+    When you finish a reading session at a new location, use the banner's Save button to update your bookmark.
+  </Step>
+</Steps>

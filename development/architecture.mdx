@@ -1,0 +1,237 @@
+---
+title: 'Architecture Overview'
+description: 'Overall architecture, tech stack, and design decisions for Open Mushaf Native'
+---
+
+## Overview
+
+Open Mushaf Native is a modern cross-platform Quran Mushaf application built with Expo and React Native. The app provides a native reading experience on iOS, Android, and Web platforms with RTL (Right-to-Left) support optimized for Arabic content.
+
+## Tech Stack
+
+<CardGroup cols={2}>
+  <Card title="Framework" icon="react">
+    React Native 0.81.5 with React 19.1.0
+  </Card>
+  <Card title="Platform" icon="mobile">
+    Expo SDK 54 for cross-platform development
+  </Card>
+  <Card title="Routing" icon="route">
+    Expo Router 6 for file-based navigation
+  </Card>
+  <Card title="State Management" icon="database">
+    Jotai 2.12.4 with MMKV for persistence
+  </Card>
+</CardGroup>
+
+### Core Dependencies
+
+```json package.json (key dependencies)
+{
+  "expo": "54.0.30",
+  "react": "19.1.0",
+  "react-native": "0.81.5",
+  "expo-router": "~6.0.21",
+  "jotai": "^2.12.4",
+  "jotai-effect": "^2.0.2",
+  "react-native-mmkv": "^3.2.0",
+  "react-native-reanimated": "~4.1.6",
+  "@gorhom/bottom-sheet": "^5.1.4"
+}
+```
+
+## Project Structure
+
+The application follows Expo's recommended folder structure with clear separation of concerns:
+
+```
+open-mushaf-native/
+├── app/                    # Expo Router file-based routing
+│   ├── (tabs)/            # Tab-based navigation group
+│   │   ├── (more)/        # More menu nested routes
+│   │   ├── index.tsx      # Mushaf reading screen
+│   │   └── lists.tsx      # Surah/Juz index
+│   ├── _layout.tsx        # Root layout with providers
+│   ├── search.tsx         # Search modal
+│   ├── navigation.tsx     # Quick navigation
+│   ├── tracker.tsx        # Daily tracker
+│   └── tutorial.tsx       # Tutorial screen
+├── components/            # Reusable UI components
+│   ├── navigation/        # Navigation components
+│   └── __tests__/         # Component tests
+├── jotai/                 # State management
+│   ├── atoms.ts           # Global state atoms
+│   └── createAtomWithStorage.ts
+├── hooks/                 # Custom React hooks
+├── utils/                 # Utility functions
+│   └── storage/           # Storage abstraction
+├── constants/             # App constants and configs
+├── types/                 # TypeScript type definitions
+├── assets/                # Static assets
+│   ├── mushaf-data/       # Quran page images
+│   ├── tafaseer/          # Tafseer (interpretation) data
+│   ├── quran-metadata/    # Quran structure metadata
+│   └── search/            # Search index data
+└── widgets/               # Android home screen widgets
+```
+
+<Note>
+The `app/` directory uses Expo Router's file-based routing convention. File and folder names directly map to app routes.
+</Note>
+
+## Design Decisions
+
+### 1. Cross-Platform Architecture
+
+<Tabs>
+  <Tab title="Native (iOS/Android)">
+    Uses MMKV for high-performance persistent storage with native bindings.
+    
+    ```typescript utils/storage/createStorage.ts
+    import { MMKV } from 'react-native-mmkv';
+    
+    const mmkv = new MMKV();
+    
+    const storage = {
+      getItem: (key: string): string | null => mmkv.getString(key) ?? null,
+      setItem: (key: string, value: string): void => mmkv.set(key, value),
+      removeItem: (key: string): void => mmkv.delete(key),
+    };
+    ```
+  </Tab>
+  
+  <Tab title="Web">
+    Falls back to browser's localStorage for web platform.
+    
+    ```typescript utils/storage/createStorage.web.ts
+    import { createJSONStorage } from 'jotai/utils';
+    
+    export function createStorage<T>() {
+      return createJSONStorage<T>();
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### 2. RTL (Right-to-Left) Support
+
+The app enforces RTL layout for Arabic content at the root level:
+
+```typescript app/_layout.tsx
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
+
+// Web-specific RTL setup
+if (Platform.OS === 'web') {
+  document.documentElement.setAttribute('dir', 'rtl');
+  document.documentElement.setAttribute('lang', 'ar');
+}
+```
+
+### 3. Performance Optimizations
+
+- **React Compiler**: Enabled via Babel plugin for automatic optimization
+- **Reanimated**: Used for 60fps animations and gestures
+- **MMKV**: Synchronous, ultra-fast key-value storage
+- **Image Optimization**: Expo Image for optimized image loading
+- **Code Splitting**: Automatic with Expo Router
+
+```json babel.config.js (excerpt)
+{
+  "plugins": [
+    "babel-plugin-react-compiler",
+    "react-native-reanimated/plugin"
+  ]
+}
+```
+
+### 4. Progressive Web App (PWA)
+
+The app supports PWA deployment with offline capabilities:
+
+- Service worker with Workbox for caching
+- Web manifest for installability
+- Offline fallback page
+
+```bash
+# Build PWA with service worker
+yarn web:export:pwa
+```
+
+## Typography
+
+The app uses Google Fonts optimized for Arabic:
+
+```typescript app/_layout.tsx
+import { Amiri_400Regular, Amiri_700Bold } from '@expo-google-fonts/amiri';
+import { Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold } from '@expo-google-fonts/tajawal';
+
+const [fontLoaded] = useFonts({
+  Amiri_400Regular,
+  Amiri_700Bold,
+  Tajawal_400Regular,
+  Tajawal_500Medium,
+  Tajawal_700Bold,
+});
+```
+
+- **Amiri**: Traditional Arabic font for Quranic text
+- **Tajawal**: Modern Arabic font for UI elements
+
+## Build & Deployment
+
+<CardGroup cols={2}>
+  <Card title="Android" icon="android">
+    EAS Build with internal testing and production tracks
+    ```bash
+    yarn android:build:production:local
+    ```
+  </Card>
+  
+  <Card title="iOS" icon="apple">
+    EAS Build for App Store distribution
+    ```bash
+    yarn ios:prod
+    ```
+  </Card>
+  
+  <Card title="Web" icon="globe">
+    Firebase Hosting with PWA support
+    ```bash
+    yarn deploy:live
+    ```
+  </Card>
+  
+  <Card title="Development" icon="code">
+    Expo Go for rapid iteration
+    ```bash
+    yarn start
+    ```
+  </Card>
+</CardGroup>
+
+## Testing Strategy
+
+- **Unit Tests**: Jest with jest-expo preset
+- **Linting**: ESLint with Expo config + Prettier
+- **Type Checking**: TypeScript strict mode
+- **Pre-commit Hooks**: Husky + lint-staged
+
+```json package.json (scripts)
+{
+  "test": "jest --watchAll",
+  "lint": "eslint .",
+  "lint:fix": "eslint . --fix"
+}
+```
+
+## Environment Variables
+
+Configuration is managed through Expo's environment variables:
+
+- `EXPO_PUBLIC_TOP_MENU_HIDE_DURATION_MS`: Auto-hide duration for top menu
+- Platform-specific builds via EAS profiles
+
+<Note>
+All public environment variables must be prefixed with `EXPO_PUBLIC_` to be accessible in the app.
+</Note>

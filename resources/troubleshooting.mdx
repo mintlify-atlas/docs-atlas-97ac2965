@@ -1,0 +1,596 @@
+---
+title: Troubleshooting
+description: Solutions to common problems and issues with Open Mushaf Native
+---
+
+This guide helps you resolve common issues you might encounter while using Open Mushaf Native.
+
+## Installation Issues
+
+<AccordionGroup>
+  <Accordion title="App won't install on Android">
+    **Symptoms:**
+    - Installation fails or gets stuck
+    - "App not installed" error message
+    - Installation blocks with security warning
+
+    **Solutions:**
+
+    1. **Check Storage Space**
+       - Ensure you have at least 200 MB free storage
+       - Go to Settings > Storage to check available space
+       - Delete unused apps or files if needed
+
+    2. **Enable Unknown Sources** (for APK installations)
+       - Go to Settings > Security
+       - Enable "Install from Unknown Sources" or "Allow from this source"
+       - Try installation again
+
+    3. **Check Android Version**
+       - Open Mushaf Native requires Android 5.0 (API 21) or higher
+       - Go to Settings > About Phone to check your version
+       - Update your system if possible
+
+    4. **Clear Google Play Store Cache**
+       - Go to Settings > Apps > Google Play Store
+       - Tap Storage > Clear Cache
+       - Restart Play Store and try again
+
+    <Note>
+    If installing from Google Play Store, ensure you're signed in with a valid Google account.
+    </Note>
+  </Accordion>
+
+  <Accordion title="iOS app won't install or update">
+    **Solutions:**
+
+    1. **Check iOS Version**
+       - Requires iOS 13.0 or higher
+       - Go to Settings > General > About to check version
+
+    2. **Free Up Storage**
+       - Go to Settings > General > iPhone Storage
+       - Delete unused apps or media
+       - Ensure at least 200 MB free space
+
+    3. **Restart Device**
+       - Press and hold power button
+       - Slide to power off
+       - Wait 30 seconds and restart
+
+    4. **Check App Store Connection**
+       - Ensure you're connected to Wi-Fi
+       - Sign out and back into App Store
+       - Try installation again
+  </Accordion>
+
+  <Accordion title="PWA installation fails on web">
+    **Solutions:**
+
+    1. **Use a Compatible Browser**
+       - Chrome 67+
+       - Edge 79+
+       - Safari 11.1+ (iOS/macOS)
+       - Firefox 58+ (limited support)
+
+    2. **Enable HTTPS**
+       - PWAs require secure connection
+       - Visit https://open-mushaf-native.web.app/
+
+    3. **Check Browser Settings**
+       - Ensure JavaScript is enabled
+       - Allow pop-ups for the site
+       - Clear browser cache and cookies
+
+    4. **Manual Installation**
+       - Chrome/Edge: Click ⋮ menu > Install Open Mushaf Native
+       - Safari: Click Share > Add to Home Screen
+  </Accordion>
+</AccordionGroup>
+
+## Performance Issues
+
+<AccordionGroup>
+  <Accordion title="App is slow or laggy">
+    **Common Causes:**
+    - Insufficient device memory
+    - Too many background apps
+    - Outdated app version
+    - Corrupted cache
+
+    **Solutions:**
+
+    1. **Close Background Apps**
+       - Android: Recent Apps button > Swipe away unused apps
+       - iOS: Double-click Home > Swipe up on apps
+
+    2. **Restart the App**
+       - Completely close Open Mushaf Native
+       - Wait 5 seconds
+       - Reopen the app
+
+    3. **Clear App Cache** (Android)
+       ```
+       Settings > Apps > Open Mushaf Native > Storage > Clear Cache
+       ```
+       <Warning>
+       Do NOT select "Clear Data" as this will delete your bookmarks and settings.
+       </Warning>
+
+    4. **Restart Device**
+       - Power off your device completely
+       - Wait 30 seconds
+       - Power back on
+
+    5. **Update the App**
+       - Check for updates in your app store
+       - Install the latest version
+
+    6. **Free Up Storage**
+       - Maintain at least 500 MB free space
+       - Delete unused apps and files
+  </Accordion>
+
+  <Accordion title="Pages take long to load">
+    **Solutions:**
+
+    1. **Wait for Initial Cache**
+       - First-time page loads build the cache
+       - Subsequent loads will be faster
+       - Preloading is working in the background
+
+    2. **Check Storage**
+       - Insufficient storage can slow caching
+       - Free up at least 200 MB
+
+    3. **Disable Other Apps**
+       - Close memory-intensive apps
+       - Disable background sync temporarily
+
+    4. **Check Device Resources**
+       - Older devices may experience slower performance
+       - Devices from 2018+ recommended for best experience
+  </Accordion>
+
+  <Accordion title="App crashes or freezes">
+    **Immediate Actions:**
+
+    1. **Force Close**
+       - Android: Recent Apps > Swipe away
+       - iOS: Double-click Home > Swipe up
+
+    2. **Clear RAM**
+       - Close all other apps
+       - Restart device if needed
+
+    **Long-term Solutions:**
+
+    1. **Update App**
+       - Install latest version from your app store
+       - Check changelog for crash fixes
+
+    2. **Reinstall App**
+       - Uninstall Open Mushaf Native
+       - Restart device
+       - Reinstall from app store
+       <Note>
+       This will reset all settings and bookmarks. Use reset feature in Settings instead if you want to preserve some data.
+       </Note>
+
+    3. **Check System Updates**
+       - Update to latest Android/iOS version
+       - Install pending security patches
+
+    4. **Report the Issue**
+       - Note what you were doing when it crashed
+       - Report via [GitHub Issues](https://github.com/adelpro/open-mushaf-native/issues)
+       - Include device model and OS version
+  </Accordion>
+</AccordionGroup>
+
+## Display & UI Issues
+
+<AccordionGroup>
+  <Accordion title="Mushaf pages appear too bright or dark">
+    **Solutions:**
+
+    1. **Adjust Dark Mode Brightness**
+       ```
+       Settings > سطوع الوضع الليلي (Dark Mode Brightness)
+       ```
+       - Slide to adjust contrast (0-100%)
+       - Higher values = brighter pages
+
+    2. **Check System Dark Mode**
+       - App follows system appearance settings
+       - Toggle system dark mode:
+         - Android: Settings > Display > Dark theme
+         - iOS: Settings > Display & Brightness
+
+    3. **Adjust Screen Brightness**
+       - Use system brightness controls
+       - Disable auto-brightness for consistent experience
+  </Accordion>
+
+  <Accordion title="Text appears blurry or pixelated">
+    **Solutions:**
+
+    1. **Check Image Quality**
+       - Ensure full download completed
+       - Poor connection during install may cause issues
+       - Reinstall if necessary
+
+    2. **Zoom Level**
+       - Use pinch-to-zoom gestures if needed
+       - Some devices may require zoom for comfortable reading
+
+    3. **Screen Resolution**
+       - Low-resolution devices may show lower quality
+       - Use landscape mode for larger display
+
+    4. **Clear Image Cache**
+       - Go to Settings
+       - Use "إعادة ضبط التطبيق" (Reset App)
+       - Redownload images
+  </Accordion>
+
+  <Accordion title="UI elements overlap or appear incorrectly">
+    **Solutions:**
+
+    1. **Restart the App**
+       - Force close and reopen
+
+    2. **Check Orientation Lock**
+       - Disable rotation lock
+       - Rotate device and back
+       - UI should realign
+
+    3. **Update App**
+       - UI fixes are frequent in updates
+       - Install latest version
+
+    4. **Check Display Settings**
+       - Android: Settings > Display > Display size
+       - iOS: Settings > Display & Brightness > Text Size
+       - Use standard or smaller sizes for best results
+  </Accordion>
+
+  <Accordion title="Dark mode not working properly">
+    **Solutions:**
+
+    1. **Enable System Dark Mode**
+       - Android: Settings > Display > Dark theme
+       - iOS: Settings > Display & Brightness > Dark
+
+    2. **Restart App**
+       - Force close and reopen after changing system theme
+
+    3. **Check Auto Theme Settings**
+       - Disable scheduled dark mode
+       - Use always-on dark mode for testing
+
+    4. **Update App**
+       - Ensure you have version 2.0.0 or higher
+       - Earlier versions had dark mode issues
+  </Accordion>
+</AccordionGroup>
+
+## Feature-Specific Issues
+
+<AccordionGroup>
+  <Accordion title="Search not working or showing no results">
+    **Solutions:**
+
+    1. **Check Search Mode**
+       - Simple search requires exact matches
+       - Try Fuzzy search for flexible matching
+       - Use Root search for Arabic derivatives
+
+    2. **Verify Text Input**
+       - Ensure correct Arabic keyboard
+       - Check for extra spaces or diacritics
+       - Try searching without tashkeel
+
+    3. **Enable Advanced Search**
+       ```
+       Search screen > Toggle advanced search options
+       ```
+
+    4. **Wait for Indexing**
+       - First search may take longer
+       - Search index builds in background
+
+    5. **Clear App Cache**
+       - Cache corruption can affect search
+       - Clear cache and try again
+  </Accordion>
+
+  <Accordion title="Tafseer popup won't open or is empty">
+    **Solutions:**
+
+    1. **Tap Directly on Verse**
+       - Ensure you're tapping verse text, not page
+       - Try tapping different parts of the verse
+
+    2. **Check Tafseer Source**
+       - Some verses may not have all Tafseer types
+       - Switch between available tabs (Ibn Katheer, Wasseet, etc.)
+
+    3. **Wait for Content Load**
+       - First load may take a few seconds
+       - Check for loading indicator
+
+    4. **Verify Download**
+       - Tafseer files may not have fully downloaded
+       - Reinstall app if issue persists
+
+    5. **Memory Issue**
+       - Close other apps to free RAM
+       - Restart device if needed
+  </Accordion>
+
+  <Accordion title="Page flip sound not playing">
+    **Solutions:**
+
+    1. **Enable in Settings**
+       ```
+       Settings > صوت قلب الصفحة (Page Flip Sound) > Toggle ON
+       ```
+
+    2. **Check Device Volume**
+       - Increase media volume
+       - Disable silent/vibrate mode
+
+    3. **Check Sound Files**
+       - Reinstall app if sound file corrupted
+
+    4. **Test with Other Apps**
+       - Verify device audio works generally
+       - Check speaker functionality
+  </Accordion>
+
+  <Accordion title="Reading position not saving">
+    **Symptoms:**
+    - App doesn't remember last page
+    - Reading Position Banner shows wrong page
+    - Bookmark doesn't persist
+
+    **Solutions:**
+
+    1. **Force Save**
+       - Navigate away from reading screen
+       - Return to verify save occurred
+
+    2. **Check Storage Permissions**
+       - Android: Settings > Apps > Open Mushaf Native > Permissions
+       - Ensure Storage permission granted
+
+    3. **Storage Full**
+       - Free up device storage
+       - App needs space to write data
+
+    4. **Corrupted Storage**
+       - Go to Settings
+       - Use "إعادة ضبط التطبيق" (Reset App)
+       - Restart fresh (you'll lose current bookmarks)
+  </Accordion>
+
+  <Accordion title="Android widget not updating">
+    **Solutions:**
+
+    1. **Check Widget Settings**
+       - Widget updates every hour by default
+       - May not reflect immediate changes
+
+    2. **Resync Widget**
+       - Open app and navigate to a page
+       - Wait a few seconds
+       - Return to home screen
+
+    3. **Remove and Re-add Widget**
+       - Long-press widget > Remove
+       - Add widget again from widget menu
+
+    4. **Check Battery Optimization**
+       - Android may restrict background updates
+       - Settings > Apps > Open Mushaf Native > Battery
+       - Select "Unrestricted"
+
+    5. **Update App**
+       - Widget sync fixed in version 4.3.0
+       - Ensure you have latest version
+
+    <Note>
+    Widget is Android-only and requires version 4.2.0 or higher.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Navigation gestures not responding">
+    **Solutions:**
+
+    1. **Check Swipe Direction**
+       - Swipe right-to-left for next page
+       - Swipe left-to-right for previous page
+
+    2. **Full Swipe Motion**
+       - Ensure swipe covers at least 50% of screen width
+       - Slow, deliberate swipes work better
+
+    3. **Avoid UI Elements**
+       - Don't swipe over top menu
+       - Don't swipe over bottom navigation
+       - Swipe on page content area
+
+    4. **Disable System Gestures**
+       - Some Android launchers override gestures
+       - Check launcher settings
+
+    5. **Restart App**
+       - Gesture handler may need refresh
+       - Force close and reopen
+  </Accordion>
+</AccordionGroup>
+
+## Web Version Issues
+
+<AccordionGroup>
+  <Accordion title="Web app not working offline">
+    **Solutions:**
+
+    1. **Initial Load Required**
+       - Visit site while online first
+       - Let all resources cache (2-3 minutes)
+       - Then use offline
+
+    2. **Check Service Worker**
+       - Chrome: DevTools > Application > Service Workers
+       - Ensure service worker is active
+
+    3. **Clear and Rebuild Cache**
+       - Browser Settings > Privacy > Clear browsing data
+       - Select "Cached images and files"
+       - Revisit site online to rebuild
+
+    4. **Use Supported Browser**
+       - Chrome/Edge recommended for best PWA support
+       - Safari has limited offline capabilities
+  </Accordion>
+
+  <Accordion title="PWA features not available">
+    **Solutions:**
+
+    1. **Install as PWA**
+       - Must install to home screen/desktop
+       - Running in browser tab has limited features
+
+    2. **Check Browser Support**
+       - Not all browsers support all PWA features
+       - Use Chrome/Edge for full support
+
+    3. **Enable Notifications** (if applicable)
+       - Browser may block notification permission
+       - Check site settings in browser
+  </Accordion>
+</AccordionGroup>
+
+## Data & Settings Issues
+
+<AccordionGroup>
+  <Accordion title="Settings not persisting">
+    **Solutions:**
+
+    1. **Check Storage Permissions**
+       - Ensure app has storage permission
+       - Settings > Apps > Open Mushaf Native > Permissions
+
+    2. **Storage Full**
+       - Free up device storage
+       - App needs space to save settings
+
+    3. **Corrupted Storage**
+       - Settings > إعادة ضبط التطبيق (Reset App)
+       - Reconfigure settings
+
+    4. **Update App**
+       - Storage system improved in version 3.5.2 (MMKV)
+       - Update for better reliability
+  </Accordion>
+
+  <Accordion title="How to completely reset the app">
+    **Method 1: In-App Reset**
+    ```
+    Settings > إعادة ضبط التطبيق (Reset App) > Confirm
+    ```
+    This resets:
+    - All settings to defaults
+    - Reading position
+    - Bookmarks
+    - Daily tracker progress
+
+    **Method 2: Clear App Data (Android)**
+    ```
+    Settings > Apps > Open Mushaf Native > Storage > Clear Data
+    ```
+
+    **Method 3: Reinstall**
+    - Uninstall the app
+    - Restart device
+    - Reinstall from app store
+
+    <Warning>
+    All methods will delete your personal data. Back up important information before proceeding.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## Error Messages
+
+<AccordionGroup>
+  <Accordion title="'Migration error' on app update">
+    **Context:**
+    - Occurred in version 3.6.0 update
+    - Fixed in version 3.6.1
+
+    **Solutions:**
+
+    1. **Update to Latest Version**
+       - Install version 3.6.1 or higher
+       - Migration fixed in this release
+
+    2. **If Update Fails**
+       - Uninstall current version
+       - Install latest version fresh
+       - Reconfigure settings
+  </Accordion>
+
+  <Accordion title="Build or loading errors (Web)">
+    **Solutions:**
+
+    1. **Clear Browser Cache**
+       - Browser may have outdated cached files
+       - Hard refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
+
+    2. **Disable Browser Extensions**
+       - Ad blockers may interfere
+       - Try incognito/private mode
+
+    3. **Check Console Errors**
+       - F12 > Console tab
+       - Note any error messages
+       - Report to developers with details
+
+    4. **Use Different Browser**
+       - Test in Chrome/Edge if using others
+       - Verify browser compatibility
+  </Accordion>
+</AccordionGroup>
+
+## Getting More Help
+
+If your issue isn't covered here or the solutions don't work:
+
+### Report on GitHub
+Create a detailed issue report:
+1. Visit [GitHub Issues](https://github.com/adelpro/open-mushaf-native/issues)
+2. Search existing issues first
+3. Create new issue with:
+   - Device model and OS version
+   - App version (found in More > About)
+   - Steps to reproduce
+   - Screenshots or screen recordings
+   - Any error messages
+
+### Contact Form
+Use the in-app contact form:
+```
+More > Contact Us
+```
+
+### Community Support
+- Check README for latest updates
+- Review changelog for known issues
+- Search closed GitHub issues for solutions
+
+<Note>
+When reporting issues, include as much detail as possible. The more information provided, the faster we can help!
+</Note>

@@ -1,0 +1,361 @@
+---
+title: Reading Tracker
+description: Track your daily Quran reading progress with customizable goals and automatic progress calculation
+---
+
+## Overview
+
+The Reading Tracker (الورد) helps you build a consistent Quran reading habit by tracking your daily progress and comparing it against customizable goals. The system automatically calculates progress based on Hizb divisions of the Quran.
+
+## How It Works
+
+<Steps>
+  <Step title="Set Daily Goal">
+    Choose how many Ahzab (portions) you want to read daily
+  </Step>
+  
+  <Step title="Read Quran">
+    Navigate through the Mushaf normally as you read
+  </Step>
+  
+  <Step title="Automatic Tracking">
+    Progress is calculated automatically based on pages read since yesterday
+  </Step>
+  
+  <Step title="Goal Completion">
+    Receive notification when you complete your daily goal
+  </Step>
+  
+  <Step title="Daily Reset">
+    Progress resets automatically at midnight for a fresh start
+  </Step>
+</Steps>
+
+## Understanding Hizb Divisions
+
+The Quran is divided into 60 Ahzab (حزب in singular) for easy tracking:
+
+- **1 Hizb** = 1/60th of the Quran
+- **1 Hizb** = Approximately 10 pages
+- **8 Thumns** (أثمان) = 1 Hizb
+
+<Note>
+The tracker uses the Thumns system internally (8 Thumns = 1 Hizb) for more precise progress calculation.
+</Note>
+
+## Progress Calculation
+
+### Automatic Tracking
+
+```typescript components/MushafPage.tsx
+useEffect(() => {
+  if (typeof currentPage === 'number') {
+    // Calculate thumns read between yesterday's page and current page
+    const numberOfThumn = calculateThumnsBetweenPages(
+      yesterdayPageValue.value,
+      currentPage,
+      thumnData,
+    );
+
+    // Update the progress state (convert thumns to ahzab)
+    setdailyTrackerCompletedValue({
+      value: numberOfThumn / 8,
+      date: new Date().toDateString(),
+    });
+  }
+}, [currentPage, yesterdayPageValue, thumnData]);
+```
+
+### Progress Calculation Logic
+
+```typescript utils/hizbProgress.ts
+export function calculateThumnsBetweenPages(
+  startPage: number,
+  endPage: number,
+  thumnData: ThumnData[],
+): number {
+  // Count how many Thumns (eighths) are between two pages
+  // Returns the number of Thumns completed
+}
+```
+
+<Tip>
+Progress is calculated by comparing your current page with the last page you read yesterday, counting all Thumns in between.
+</Tip>
+
+## Goal Management
+
+### Setting Goals
+
+```typescript app/tracker.tsx
+const incrementDailyGoal = () => setdailyTrackerGoalValue((prev) => prev + 1);
+const decrementDailyGoal = () =>
+  setdailyTrackerGoalValue((prev) => Math.max(1, prev - 1));
+```
+
+Goals are adjusted in full Hizb increments:
+
+```tsx
+<ThemedView style={styles.controls}>
+  <TouchableOpacity onPress={decrementDailyGoal}>
+    <Feather name="minus" size={20} color={primaryColor} />
+  </TouchableOpacity>
+  
+  <ThemedText style={styles.controlValue}>
+    {getHizbText(dailyTrackerGoalValue)}
+  </ThemedText>
+  
+  <TouchableOpacity onPress={incrementDailyGoal}>
+    <Feather name="plus" size={20} color={primaryColor} />
+  </TouchableOpacity>
+</ThemedView>
+```
+
+### Arabic Pluralization
+
+The tracker uses proper Arabic grammar for displaying counts:
+
+```typescript app/tracker.tsx
+const getHizbText = (count: number) => {
+  const hizbCount = count;
+
+  if (hizbCount === 0) return '0 أحزاب';
+  if (hizbCount === 1) return 'حزب واحد';
+  if (hizbCount === 2) return 'حزبين';
+  if (hizbCount >= 3 && hizbCount <= 10) return `${hizbCount} أحزاب`;
+  return `${hizbCount} حزباً`;
+};
+```
+
+## Progress Display
+
+### Visual Progress Bar
+
+```tsx app/tracker.tsx
+const dailyProgress =
+  dailyTrackerGoalValue > 0
+    ? Math.min(
+        100,
+        (dailyTrackerCompletedValue.value / 8 / (dailyTrackerGoalValue / 8)) *
+          100,
+      )
+    : 0;
+
+<ThemedView style={styles.progressContainer}>
+  <ThemedView
+    style={[
+      styles.progressBar,
+      { width: `${dailyProgress}%`, backgroundColor: primaryColor },
+    ]}
+  />
+  <ThemedText style={styles.progressText}>
+    {dailyProgress.toFixed(1)}%
+  </ThemedText>
+</ThemedView>
+```
+
+### Progress Information
+
+```tsx
+<ThemedText style={styles.infoText}>
+  قراءة{' '}
+  {Number.isInteger(dailyTrackerCompletedValue.value)
+    ? getHizbText(dailyTrackerCompletedValue.value)
+    : `${dailyTrackerCompletedValue.value.toFixed(1)} حزباً`}{' '}
+  من أصل {getHizbText(dailyTrackerGoalValue)}
+</ThemedText>
+```
+
+<Note>
+The progress bar shows your completion percentage, with text that changes color based on progress (white text when >50% for better visibility).
+</Note>
+
+## Notifications
+
+### Goal Completion Notification
+
+```typescript components/MushafPage.tsx
+useEffect(() => {
+  progressValue === 1 && setShowGoalNotification(true);
+}, [progressValue]);
+
+useEffect(() => {
+  if (showTrackerNotificationValue && showGoalNotification) {
+    notify(
+      'تم إكمال الورد اليومي بنجاح',
+      'tracker_goal_notification',
+      'neutral',
+    );
+  }
+}, [notify, showGoalNotification, showTrackerNotificationValue]);
+```
+
+When you reach 100% of your goal:
+- A notification appears: "تم إكمال الورد اليومي بنجاح"
+- Notification auto-dismisses after 3 seconds
+- Only shown if notifications are enabled in settings
+
+### Notification Settings
+
+```typescript jotai/atoms.ts
+export const showTrackerNotification = createAtomWithStorage<boolean>(
+  'ShowTrackerNotification',
+  false,
+);
+```
+
+<Tip>
+You can enable or disable goal completion notifications in the app settings.
+</Tip>
+
+## Daily Reset System
+
+### Automatic Reset at Midnight
+
+```typescript jotai/atoms.ts
+type DailyTrackerProgress = {
+  value: number;
+  date: string;
+};
+
+export const dailyTrackerCompleted =
+  createAtomWithStorage<DailyTrackerProgress>('DailyTrackerCompleted', {
+    value: 0,
+    date: new Date().toDateString(),
+  });
+
+observe((get, set) => {
+  (async () => {
+    const stored = await get(dailyTrackerCompleted);
+    const today = new Date().toDateString();
+
+    if (stored.date !== today) {
+      set(dailyTrackerCompleted, { value: 0, date: today });
+    }
+  })();
+});
+```
+
+### Yesterday Page Tracking
+
+```typescript jotai/atoms.ts
+type PageWithDate = {
+  value: number;
+  date: string;
+};
+
+export const yesterdayPage = createAtomWithStorage<PageWithDate>(
+  'YesterdayPage',
+  {
+    value: 1,
+    date: new Date().toDateString(),
+  },
+);
+
+observe((get, set) => {
+  (async () => {
+    const today = new Date().toDateString();
+    const saved = await get(yesterdayPage);
+    const lastPage = await get(currentSavedPage);
+
+    if (saved.date !== today) {
+      set(yesterdayPage, { value: lastPage, date: today });
+    }
+  })();
+});
+```
+
+<Accordion title="How does the reset work?">
+  At midnight, the app compares the stored date with today's date. If they differ, it:
+  1. Resets your progress to 0
+  2. Updates "yesterday's page" to your last saved page
+  3. Saves the new date to prevent multiple resets
+</Accordion>
+
+## Manual Reset
+
+### Reset Confirmation Modal
+
+```typescript app/tracker.tsx
+const performReset = async () => {
+  if (typeof savedPage === 'number' && savedPage > 0) {
+    setYesterdayPageValue({
+      value: savedPage,
+      date: new Date().toDateString(),
+    });
+  }
+
+  setdailyTrackerCompletedValue({
+    value: 0,
+    date: new Date().toDateString(),
+  });
+  
+  // Update Android widget
+  await updateAndroidWidget();
+  setConfirmModalVisible(false);
+};
+```
+
+Users can manually reset their progress:
+- Opens a confirmation modal to prevent accidental resets
+- Updates yesterday's page to current saved page
+- Resets completed value to 0
+- Syncs with Android widget
+
+<Note>
+Manual reset is useful if you want to start tracking from a new point without waiting for midnight.
+</Note>
+
+## Persistent Storage
+
+### Goal Storage
+
+```typescript jotai/atoms.ts
+export const dailyTrackerGoal = createAtomWithStorage<number>(
+  'DailyTrackerGoal',
+  1, // Default: 1 Hizb per day
+);
+```
+
+### Progress Storage
+
+All tracker data is persisted:
+- `dailyTrackerGoal` - Your daily goal (in Ahzab)
+- `dailyTrackerCompleted` - Progress with date stamp
+- `yesterdayPage` - Last page from previous day with date
+- `showTrackerNotification` - Notification preference
+
+<CardGroup cols={2}>
+  <Card title="Persistent Goals" icon="bullseye">
+    Your daily goal is saved and persists across app sessions
+  </Card>
+  
+  <Card title="Date Tracking" icon="calendar">
+    Progress includes timestamps to enable automatic daily resets
+  </Card>
+  
+  <Card title="Widget Sync" icon="mobile">
+    Android widget updates when you reset or complete goals
+  </Card>
+  
+  <Card title="Automatic Calculation" icon="calculator">
+    No manual logging needed - progress calculates as you read
+  </Card>
+</CardGroup>
+
+## Integration with Reading
+
+The tracker seamlessly integrates with normal Mushaf navigation:
+
+```typescript components/MushafPage.tsx
+const { currentPage, setCurrentPage } = useCurrentPage();
+
+// Progress updates automatically as you change pages
+useEffect(() => {
+  // Calculate and update progress based on current page
+}, [currentPage]);
+```
+
+<Tip>
+You don't need to do anything special to track your reading - just navigate the Mushaf normally and your progress updates automatically!
+</Tip>

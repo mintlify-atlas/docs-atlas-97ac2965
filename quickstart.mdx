@@ -1,80 +1,161 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get started with Open Mushaf Native in minutes
 ---
 
-## Get started in three steps
+Get up and running with Open Mushaf Native in just a few minutes. This guide will walk you through downloading, installing, and using the app for the first time.
 
-Get your documentation site running locally and make your first customization.
+## Download the app
 
-### Step 1: Set up your local environment
+Open Mushaf Native is available on multiple platforms. Choose the one that works best for you:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<CardGroup cols={3}>
+  <Card title="Android" icon="google-play" href="https://play.google.com/store/apps/details?id=com.adelpro.openmushafnative">
+    Download from Google Play Store
+  </Card>
+  <Card title="Web App" icon="globe" href="https://open-mushaf-native.web.app/">
+    Use directly in your browser
+  </Card>
+  <Card title="APK" icon="download" href="https://github.com/adelpro/open-mushaf-native/releases/latest">
+    Download APK from GitHub
+  </Card>
+</CardGroup>
+
+## First launch
+
+When you first open Open Mushaf Native, you'll be guided through a quick setup:
+
+<Steps>
+  <Step title="Select your Riwaya">
+    Choose between **Hafs 'an 'Asim** or **Warsh 'an Nafi'** recitation styles.
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    <Note>
+      You can change this later in the Settings menu.
+    </Note>
+  </Step>
+  
+  <Step title="Complete the tutorial">
+    A brief interactive tutorial will introduce you to the main features:
+    - Swipe navigation between pages
+    - Tap to access the top menu
+    - Long press on text to view Tafseer
+  </Step>
+  
+  <Step title="Start reading">
+    The app will open to the last page you were reading, or page 1 if it's your first time.
+  </Step>
+</Steps>
 
-### Step 2: Deploy your changes
+## Basic navigation
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+### Page navigation
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Tabs>
+  <Tab title="Swipe">
+    Swipe left or right to move between Mushaf pages. The app uses gesture recognition for smooth navigation.
+  </Tab>
+  
+  <Tab title="Top menu">
+    Tap anywhere on the page to reveal the top menu, which shows:
+    - Current Surah name
+    - Current Juz number
+    - Progress within the current Juz (Hizb/Thumn)
+  </Tab>
+  
+  <Tab title="Direct navigation">
+    Use the bottom menu to navigate by:
+    - Page number
+    - Surah and Ayah
+    - Juz or Hizb
+  </Tab>
+</Tabs>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+### Access Tafseer
 
-### Step 3: Go live
+To read Tafseer (commentary) for any verse:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+1. Long press on any verse in the Mushaf page
+2. A bottom sheet will appear with available Tafseer sources
+3. Swipe between different commentaries using the tabs
+4. Drag the bottom sheet handle to resize it
+
+<Info>
+  Open Mushaf Native includes 11 classical Tafseer sources, including Ibn Katheer, Al-Tabari, and Al-Qurtubi.
+</Info>
+
+## Essential features
+
+### Search the Quran
+
+<Steps>
+  <Step title="Open search">
+    Tap the search icon in the bottom navigation bar
+  </Step>
+  
+  <Step title="Choose search mode">
+    Select from four search modes:
+    - **Simple**: Basic text search
+    - **Fuzzy**: Finds similar matches
+    - **Root**: Search by Arabic root
+    - **Lemma**: Search by word lemma
+  </Step>
+  
+  <Step title="View results">
+    Results are highlighted with different colors based on match type. Tap any result to jump to that page.
+  </Step>
+</Steps>
+
+### Daily reading tracker
+
+Track your daily Quran reading progress:
+
+1. Open the **Tracker** tab from the bottom menu
+2. Set your daily goal (in Ahzab units)
+3. Your progress is automatically tracked as you read
+4. Goals reset at midnight each day
+
+### Dark mode
+
+Open Mushaf Native automatically adapts to your system theme. You can also:
+
+- Adjust the Mushaf page contrast in Settings
+- Customize the reading experience with various options
+
+## Offline usage
+
+<Note>
+  Open Mushaf Native works completely offline once the initial pages are cached.
+</Note>
+
+The app automatically preloads nearby pages as you read:
+- Current page
+- Previous page
+- Next 2 pages
+
+This ensures smooth navigation even without an internet connection. Tafseer content and search data are also available offline.
+
+## Customization
+
+Access **Settings** from the **More** menu to customize:
+
+- **Riwaya selection**: Switch between Hafs and Warsh
+- **Page flip sound**: Enable/disable audio feedback
+- **Dark mode contrast**: Adjust page brightness (0-100%)
+- **Notifications**: Configure daily tracker and Hizb notifications
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Explore features" icon="compass" href="/features/offline-reading">
+    Learn about offline reading, Tafseer, and search
+  </Card>
+  <Card title="Customization guide" icon="palette" href="/guides/customization">
+    Personalize your reading experience
+  </Card>
+  <Card title="Navigation guide" icon="map" href="/guides/navigation">
+    Master all navigation methods
+  </Card>
+  <Card title="Full installation" icon="download" href="/installation">
+    Build from source or deploy your own instance
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

@@ -1,0 +1,210 @@
+---
+title: Customization
+description: Personalize your Quran reading experience with themes, dark mode, Mushaf contrast, and flip sound
+icon: palette
+---
+
+Open Mushaf Native offers various customization options to personalize your Quran reading experience.
+
+## Accessing Settings
+
+Settings are available at the Settings screen (`app/(tabs)/(more)/settings.tsx`).
+
+## Theme System
+
+The app supports automatic light and dark mode based on your device's system preferences.
+
+### Color Schemes
+
+<Tabs>
+  <Tab title="Light Mode">
+    - **Background:** `#FAF8F6` (warm off-white)
+    - **Text:** `#1B1B1B` (near black)
+    - **Primary:** `#1E5243` (deep green)
+    - **Card:** `#FFFFFF` (white)
+    - **Icon:** `#6D6D6D` (medium gray)
+    - **Secondary:** `#C2B280` (gold/beige)
+  </Tab>
+  <Tab title="Dark Mode">
+    - **Background:** `#121212` (near black)
+    - **Text:** `#EDEDED` (light gray)
+    - **Tint:** `#F1F3F4` (off-white)
+    - **Card:** `#1E1E1E` (dark gray)
+    - **Icon:** `#A0A0A0` (medium gray)
+    - **Secondary:** `#A0A07E` (muted gold)
+  </Tab>
+</Tabs>
+
+<Info>
+The theme automatically switches based on your device's color scheme setting. The app uses the `useColorScheme()` hook from React Native to detect system preferences.
+</Info>
+
+### How Themes Work
+
+Themes are implemented through:
+
+1. **Colors Configuration:** `constants/Colors.ts` defines all color values
+2. **useColors Hook:** `hooks/useColors.ts` provides theme-aware colors
+3. **Themed Components:** `ThemedView`, `ThemedText`, and `ThemedButton` automatically adapt
+
+## Dark Mode Contrast Adjustment
+
+Customize the brightness of Mushaf pages in dark mode to reduce eye strain.
+
+<Steps>
+  <Step title="Open Settings">
+    Navigate to the Settings screen.
+  </Step>
+  <Step title="Adjust Brightness">
+    Find the "سطوع الوضوع الليلي" (Dark Mode Brightness) section with a slider.
+  </Step>
+  <Step title="Set Contrast Level">
+    Drag the slider to adjust brightness from 0% to 100%.
+    
+    The current value is displayed as a percentage next to the label.
+  </Step>
+</Steps>
+
+<Info>
+The contrast setting is stored in the `mushafContrast` atom and persists across app sessions. Default value is 50% (0.5).
+</Info>
+
+## Flip Sound
+
+Enable or disable page flip sound effects when navigating between pages.
+
+<Steps>
+  <Step title="Open Settings">
+    Navigate to the Settings screen.
+  </Step>
+  <Step title="Toggle Flip Sound">
+    Find the "صوت قلب الصفحة" (Page Flip Sound) setting.
+  </Step>
+  <Step title="Enable/Disable">
+    Tap the toggle switch to turn the sound on or off.
+  </Step>
+</Steps>
+
+<Note>
+Flip sound is **disabled by default**. The setting is stored in the `flipSound` atom and persists across sessions.
+</Note>
+
+## Riwaya Selection
+
+Choose between different Quran recitation styles (Riwayat).
+
+<Steps>
+  <Step title="Open Settings">
+    Navigate to the Settings screen.
+  </Step>
+  <Step title="Select Riwaya">
+    Find the "إختيار الرواية" (Choose Riwaya) section.
+  </Step>
+  <Step title="Choose Option">
+    Tap one of the segmented control options:
+    - **حفص** (Hafs 'an 'Asim)
+    - **ورش** (Warsh 'an Nafi')
+  </Step>
+</Steps>
+
+<Warning>
+Changing the Riwaya will reload the app to apply the new Mushaf images. Your reading position will be preserved.
+</Warning>
+
+### Available Riwayat
+
+The app supports:
+- **Hafs 'an 'Asim** (حفص): Most widely used Riwaya
+- **Warsh 'an Nafi'** (ورش): Primarily used in North Africa
+
+The Riwaya setting is stored in the `mushafRiwaya` atom and affects:
+- Mushaf page images loaded from `imagesMapHafs` or `imagesMapWarsh`
+- Total number of pages (varies by Riwaya)
+
+## Notification Settings
+
+Configure notifications for daily reading tracker completion.
+
+### Daily Tracker Notification
+
+<Steps>
+  <Step title="Toggle Notification">
+    Find "تنبيه الورد اليومي" (Daily Tracker Notification) in Settings.
+  </Step>
+  <Step title="Enable/Disable">
+    Tap the toggle switch to turn notifications on or off.
+  </Step>
+</Steps>
+
+### Notification Frequency
+
+<Steps>
+  <Step title="Select Frequency">
+    Find "تفعيل التنبيهات" (Enable Notifications) in Settings.
+  </Step>
+  <Step title="Choose Option">
+    Select from the segmented control:
+    - **تعطيل** (Disable): No notifications
+    - **حزب** (Hizb): Notify every Hizb (1/60 of Quran)
+    - **جزء** (Juz): Notify every Juz (1/30 of Quran)
+  </Step>
+</Steps>
+
+<Info>
+Notification settings are stored in:
+- `showTrackerNotification`: Boolean for on/off
+- `hizbNotification`: Number (0=disabled, 1=Hizb, 2=Juz)
+</Info>
+
+## Reset Settings
+
+Reset all app settings and data to defaults.
+
+<Steps>
+  <Step title="Open Settings">
+    Navigate to the Settings screen.
+  </Step>
+  <Step title="Tap Reset Button">
+    Find and tap the red "إعادة ضبط التطبيق" (Reset App) button.
+  </Step>
+  <Step title="Confirm">
+    A confirmation modal will appear asking "هل أنت متأكد من رغبتك في إعادة ضبط التطبيق؟" (Are you sure you want to reset the app?)
+  </Step>
+  <Step title="Complete Reset">
+    Tap "تأكيد" (Confirm) to clear all storage and reload the app.
+  </Step>
+</Steps>
+
+<Warning>
+Resetting the app will:
+- Clear all saved settings
+- Reset your reading position
+- Clear daily tracker progress
+- Remove all bookmarks
+- Reload the app
+
+This action cannot be undone.
+</Warning>
+
+## Persistence
+
+All customization settings are automatically saved using:
+
+- **Storage Engine:** MMKV (fast, synchronous storage)
+- **State Management:** Jotai atoms with `atomWithStorage`
+- **Storage Location:** `utils/storage/createStorage.ts`
+
+Settings persist across:
+- App restarts
+- Device reboots
+- App updates
+
+## Accessibility
+
+All settings include proper accessibility labels and hints:
+
+- Toggle switches have `accessibilityState` indicating checked/unchecked
+- Buttons have descriptive `accessibilityLabel` and `accessibilityHint`
+- Segmented controls use `accessibilityRole="radiogroup"`
+
+This ensures the app is usable with screen readers and assistive technologies.

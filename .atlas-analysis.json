@@ -1,0 +1,132 @@
+{
+  "projectType": "saas",
+  "projectName": "Open Mushaf Native",
+  "projectDescription": "A modern cross-platform Quran Mushaf app for seamless offline reading with gesture navigation and dynamic Tafseer.",
+  "theme": "almond",
+  "primaryColor": "#2E7D32",
+  "lightColor": "#66BB6A",
+  "darkColor": "#1B5E20",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/offline-reading",
+              "features/quran-riwayas",
+              "features/tafseer",
+              "features/search",
+              "features/reading-tracker",
+              "features/gestures"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/navigation",
+              "guides/customization",
+              "guides/offline-mode",
+              "guides/bookmarks"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/android",
+              "deployment/ios",
+              "deployment/web",
+              "deployment/pwa"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "development/architecture",
+              "development/state-management",
+              "development/routing"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "development/components/mushaf-page",
+              "development/components/tafseer-popup",
+              "development/components/navigation"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "contributing/setup",
+              "contributing/guidelines",
+              "contributing/testing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "API",
+            "pages": [
+              "api/hooks",
+              "api/state-atoms",
+              "api/utilities"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "resources/changelog",
+              "resources/faq",
+              "resources/troubleshooting"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Offline Quran reading with full page caching",
+    "Gesture-based swipe navigation between pages",
+    "Multiple Quran Riwayas (Hafs and Warsh)",
+    "Dynamic Tafseer popups with 10+ classical commentaries",
+    "Advanced search with fuzzy, root, and lemma search",
+    "Daily reading tracker with progress goals",
+    "Cross-platform support (Android, iOS, Web, macOS)",
+    "PWA support with service worker caching",
+    "Android home screen widgets",
+    "Dark mode and customizable reading experience"
+  ],
+  "publicApiSurface": [
+    "useQuranMetadata() - Access Quran metadata (surahs, ayahs, pages)",
+    "useCurrentPage() - Get and set current Mushaf page",
+    "useTafseerContent() - Load Tafseer data for verses",
+    "useQuranSearch() - Search Quran with various modes",
+    "useImagePreloader() - Preload Mushaf page images",
+    "currentSavedPage atom - Persistent page position",
+    "mushafRiwaya atom - Selected Quran recitation (Hafs/Warsh)",
+    "dailyTrackerGoal atom - Daily reading goal",
+    "tafseerTab atom - Selected Tafseer source",
+    "MushafPage component - Main Quran page viewer",
+    "TafseerPopup component - Bottom sheet Tafseer display",
+    "PageNavigator component - Surah/Ayah/Juz navigation",
+    "TopMenu component - Reading interface controls"
+  ]
+}
